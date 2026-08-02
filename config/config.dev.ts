@@ -9,6 +9,7 @@ let devRoutes = [...routes];
 export default defineConfig({
   nodeModulesTransform: {
     type: 'none',
+    exclude: ['@ckeditor/ckeditor5-build-classic'],
   },
   fastRefresh: {},
   routes: devRoutes,
