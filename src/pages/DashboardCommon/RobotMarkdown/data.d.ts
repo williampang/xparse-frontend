@@ -92,3 +92,37 @@ export const QuestionCategoryDesc: Record<string, any> = {
   answer: '答案',
   other: '其他',
 };
+
+/** 试卷结构相关类型 */
+export interface IExamPaperOption {
+  label: string; // 选项标签，如 A、B、C、D
+  text: string; // 选项内容
+}
+
+export interface IExamPaperQuestion {
+  index: number; // 题号
+  type: number | string; // 题目类型
+  typeDesc: string; // 题目类型描述
+  stem: string; // 题干内容
+  options: IExamPaperOption[]; // 选项列表（选择题）
+  answer: string; // 答案
+  analysis: string; // 解析
+  images: string[]; // 题目图片
+  tables: any[]; // 题目表格
+  subQuestions: IExamPaperQuestion[]; // 子题目（阅读理解等）
+  element_list: any[]; // 原始元素列表
+}
+
+export interface IExamPaperSection {
+  name: string; // 大题名称，如“一、选择题”
+  questionType: number | string; // 大题题型
+  questionTypeDesc: string; // 题型描述
+  questions: IExamPaperQuestion[]; // 小题列表
+}
+
+export interface IExamPaperData {
+  title: string; // 试卷标题
+  subtitle: string; // 副标题
+  sections: IExamPaperSection[]; // 大题列表
+  questionCount: number; // 总题数
+}

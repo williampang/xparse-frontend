@@ -1,5 +1,12 @@
 import lodash from 'lodash';
 import { ResultType } from './containers/RightView/RightView';
+import type {
+  IExamPaperData,
+  IExamPaperSection,
+  IExamPaperQuestion,
+  IExamPaperOption,
+} from './data.d';
+import { QuestionTypeDesc, QuestionCategoryDesc } from './data.d';
 
 export interface IRectItem {
   [key: string]: any;
@@ -755,3 +762,391 @@ export const setCellId = (cell: any) => {
 };
 
 export const removeFormula$ = (text: string) => text.replace(/^\$/, '').replace(/\$$/, '');
+
+/**
+ * 将 JSON 结果格式化为试卷结构
+ * 支持两种数据源：
+ * 1. res.questions 数组（切题接口返回）
+ * 2. res.detail 数组（文档解析接口返回，通过文本模式识别试卷结构）
+ */
+export const formatExamPaper = (res: any): IExamPaperData | null => {
+  if (!res) return null;
+
+  // 优先使用 questions 数据
+  if (Array.isArray(res.questions) && res.questions.length > 0) {
+    return formatExamPaperFromQuestions(res);
+  }
+
+  // 其次从 detail 中解析试卷结构
+  const detail = res.detail_new || res.detail;
+  if (Array.isArray(detail) && detail.length > 0) {
+    return formatExamPaperFromDetail(res, detail);
+  }
+
+  // 最后尝试从 markdown 解析
+  if (res.markdown) {
+    return formatExamPaperFromMarkdown(res);
+  }
+
+  return null;
+};
+
+/**
+ * 从 questions 数组生成试卷结构
+ */
+const formatExamPaperFromQuestions = (res: any): IExamPaperData => {
+  const questions = res.questions;
+  const sections: IExamPaperSection[] = [];
+  let currentSection: IExamPaperSection | null = null;
+  let questionCount = 0;
+
+  let title = '';
+  let subtitle = '';
+  const detail = res.detail_new || res.detail;
+  if (Array.isArray(detail)) {
+    for (const item of detail) {
+      if (typeof item.outline_level === 'number' && item.outline_level >= 0 && item.text) {
+        if (!title) title = item.text;
+        else if (!subtitle) { subtitle = item.text; break; }
+      }
+    }
+  }
+
+  for (let idx = 0; idx < questions.length; idx++) {
+    const cur = questions[idx];
+    const questionType = cur.type;
+    const typeDesc = QuestionTypeDesc[questionType] || `题型${questionType}`;
+
+    if (!currentSection || currentSection.questionType !== questionType) {
+      const sectionIndex = sections.length + 1;
+      currentSection = {
+        name: `${numberToChinese(sectionIndex)}、${typeDesc}`,
+        questionType,
+        questionTypeDesc: typeDesc,
+        questions: [],
+      };
+      sections.push(currentSection);
+    }
+
+    const question = parseQuestion(cur, idx);
+    currentSection.questions.push(question);
+    questionCount++;
+  }
+
+  return { title, subtitle, sections, questionCount };
+};
+
+// 题号正则：匹配 "1." "2、" "（3）" "(4)" 等格式
+const QUESTION_INDEX_REGEX = /^\s*(\d{1,3})\s*[.、．)\]]/;
+// 大题标题正则：匹配 "一、选择题" "二、填空题（每空2分）" 等
+const SECTION_TITLE_REGEX = /^\s*([一二三四五六七八九十]{1,3})\s*[.、．)\]]\s*(.+)/;
+// 选项正则：匹配 "A." "B、" "C．" "D)" 等
+const OPTION_REGEX = /^\s*([A-Za-z])\s*[.、．)\]]\s*(.*)/;
+
+/**
+ * 从 detail 数组解析试卷结构
+ * 匹配优先级：题号 > 选项 > 答案/解析 > 大题标题 > outline_level 标题 > 普通文本
+ */
+const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | null => {
+  let title = '';
+  let subtitle = '';
+  const sections: IExamPaperSection[] = [];
+  let currentSection: IExamPaperSection | null = null;
+  let currentQuestion: IExamPaperQuestion | null = null;
+  let questionCount = 0;
+  let lastQuestionIndex = 0; // 当前大题内上一题的题号，用于启发式判断
+
+  for (let idx = 0; idx < detail.length; idx++) {
+    const item = detail[idx];
+    const text = (item.text || '').trim();
+    const outlineLevel = item.outline_level;
+    const itemType = item.type;
+
+    // 跳过非正文内容（页眉页脚等）
+    if (item.content === 1) continue;
+
+    // 处理图片类型
+    if (itemType === 'image') {
+      if (currentQuestion) {
+        const imgSrc = item.base64str
+          ? `data:image/jpg;base64,${item.base64str}`
+          : item.image_url || '';
+        if (imgSrc) currentQuestion.images.push(imgSrc);
+      }
+      continue;
+    }
+
+    // 处理表格类型
+    if (itemType === 'table') {
+      if (currentQuestion) {
+        currentQuestion.tables.push(item);
+      }
+      continue;
+    }
+
+    if (!text) continue;
+
+    // 1. 检测大题标题（如 "一、选择题" "二．填空题"）—— 中文数字开头，优先于题号判断
+    const sectionMatch = text.match(SECTION_TITLE_REGEX);
+    if (sectionMatch) {
+      currentSection = {
+        name: text,
+        questionType: 'section',
+        questionTypeDesc: sectionMatch[2],
+        questions: [],
+      };
+      sections.push(currentSection);
+      currentQuestion = null;
+      lastQuestionIndex = 0;
+      continue;
+    }
+
+    // 2. 检测新题目开始（如 "1．" "2." "19.(6分）"）
+    const questionMatch = text.match(QUESTION_INDEX_REGEX);
+    if (questionMatch) {
+      const qIndex = parseInt(questionMatch[1], 10);
+
+      // 启发式：如果题号不比上一题大，可能是题干续文（如 "边长均为1．点A..."）
+      const isContinuation = currentQuestion && qIndex <= lastQuestionIndex;
+
+      if (!isContinuation) {
+        // 如果没有大题分组，创建默认大题
+        if (!currentSection) {
+          currentSection = {
+            name: '试题',
+            questionType: 'default',
+            questionTypeDesc: '试题',
+            questions: [],
+          };
+          sections.push(currentSection);
+        }
+
+        questionCount++;
+        lastQuestionIndex = qIndex;
+        const stemText = text.replace(QUESTION_INDEX_REGEX, '').trim();
+
+        currentQuestion = {
+          index: qIndex,
+          type: 'unknown',
+          typeDesc: '',
+          stem: stemText,
+          options: [],
+          answer: '',
+          analysis: '',
+          images: [],
+          tables: [],
+          subQuestions: [],
+          element_list: [],
+        };
+        currentSection.questions.push(currentQuestion);
+        continue;
+      }
+      // 是续文，落入下方普通文本处理
+    }
+
+    // 3. 检测选项（如 "A." "B、" "C．"）
+    const optionMatch = text.match(OPTION_REGEX);
+    if (optionMatch && currentQuestion) {
+      currentQuestion.options.push({ label: optionMatch[1], text: optionMatch[2] });
+      // 有选项说明是选择题
+      if (currentQuestion.typeDesc === '') {
+        currentQuestion.type = 0;
+        currentQuestion.typeDesc = '选择题';
+      }
+      continue;
+    }
+
+    // 4. 检测答案
+    if (/^\s*[【\[]?答案[】\]]?\s*[:：]?/.test(text) && currentQuestion) {
+      currentQuestion.answer = text.replace(/^\s*[【\[]?答案[】\]]?\s*[:：]?\s*/, '');
+      continue;
+    }
+
+    // 5. 检测解析
+    if (/^\s*[【\[]?解析[】\]]?\s*[:：]?/.test(text) && currentQuestion) {
+      currentQuestion.analysis = text.replace(/^\s*[【\[]?解析[】\]]?\s*[:：]?\s*/, '');
+      continue;
+    }
+
+    // 6. 检测标题（outline_level >= 0）—— 放在题号/选项之后，避免误判
+    if (typeof outlineLevel === 'number' && outlineLevel >= 0) {
+      if (!title && !currentQuestion) {
+        title = text;
+      } else if (!subtitle && !currentQuestion && outlineLevel <= 1) {
+        subtitle = text;
+      } else if (!currentQuestion || sections.length === 0) {
+        // 还没有题目时，其他标题作为大题名称
+        currentSection = {
+          name: text,
+          questionType: 'section',
+          questionTypeDesc: text,
+          questions: [],
+        };
+        sections.push(currentSection);
+        currentQuestion = null;
+        lastQuestionIndex = 0;
+      } else {
+        // 已有题目上下文，归入题干
+        currentQuestion.stem += (currentQuestion.stem ? '\n' : '') + text;
+      }
+      continue;
+    }
+
+    // 7. 普通文本归入当前题目的题干
+    if (currentQuestion) {
+      currentQuestion.stem += (currentQuestion.stem ? '\n' : '') + text;
+    } else if (!currentSection) {
+      // 还没有任何题目，可能是试卷说明文字
+      if (!title) {
+        title = text;
+      } else if (!subtitle) {
+        subtitle = text;
+      }
+    }
+  }
+
+  if (sections.length === 0 && questionCount === 0) {
+    return null;
+  }
+
+  return { title, subtitle, sections, questionCount };
+};
+
+/**
+ * 从 markdown 文本解析试卷结构
+ */
+const formatExamPaperFromMarkdown = (res: any): IExamPaperData | null => {
+  const markdown: string = res.markdown;
+  if (!markdown) return null;
+
+  const lines = markdown.split('\n');
+  const detailLike: any[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // 解析 markdown 标题
+    const headerMatch = trimmed.match(/^(#{1,6})\s+(.*)/);
+    if (headerMatch) {
+      detailLike.push({
+        text: headerMatch[2],
+        outline_level: headerMatch[1].length - 1,
+        type: 'paragraph',
+      });
+    } else if (trimmed.startsWith('![')) {
+      // 图片
+      const imgMatch = trimmed.match(/!\[.*?\]\((.*?)\)/);
+      detailLike.push({
+        text: '',
+        type: 'image',
+        image_url: imgMatch?.[1] || '',
+      });
+    } else {
+      detailLike.push({
+        text: trimmed,
+        type: 'paragraph',
+        outline_level: -1,
+      });
+    }
+  }
+
+  if (detailLike.length === 0) return null;
+  return formatExamPaperFromDetail(res, detailLike);
+};
+
+/**
+ * 解析单个题目
+ */
+const parseQuestion = (cur: any, idx: number): IExamPaperQuestion => {
+  const questionType = cur.type;
+  const typeDesc = QuestionTypeDesc[questionType] || `题型${questionType}`;
+  let stem = '';
+  let answer = '';
+  let analysis = '';
+  const options: IExamPaperOption[] = [];
+  const images: string[] = [];
+  const tables: any[] = [];
+  const subQuestions: IExamPaperQuestion[] = [];
+
+  // 处理 element_list
+  if (Array.isArray(cur.element_list)) {
+    for (const element of cur.element_list) {
+      const category = element.type;
+      const text = element.text || '';
+
+      if (category === 0 || category === 'stem') {
+        stem += (stem ? '\n' : '') + text;
+      } else if (category === 1 || category === 'option') {
+        // 解析选项，如 "A. xxx" 或 "A、xxx"
+        const optionMatch = text.match(/^([A-Za-z])\s*[.、．)\]]\s*(.*)/s);
+        if (optionMatch) {
+          options.push({ label: optionMatch[1], text: optionMatch[2] });
+        } else {
+          // 没有匹配到标准格式，直接作为一个选项
+          options.push({ label: String.fromCharCode(65 + options.length), text });
+        }
+      } else if (category === 2 || category === 'analysis') {
+        analysis += (analysis ? '\n' : '') + text;
+      } else if (category === 3 || category === 'answer') {
+        answer += (answer ? '\n' : '') + text;
+      } else {
+        // 其他类型归入题干
+        stem += (stem ? '\n' : '') + text;
+      }
+    }
+  }
+
+  // 处理 image_list
+  if (Array.isArray(cur.image_list)) {
+    for (const img of cur.image_list) {
+      if (typeof img === 'string') {
+        images.push(img);
+      } else if (img?.image_url) {
+        images.push(img.image_url);
+      } else if (img?.base64) {
+        images.push(`data:image/png;base64,${img.base64}`);
+      }
+    }
+  }
+
+  // 处理 table_list
+  if (Array.isArray(cur.table_list)) {
+    for (const table of cur.table_list) {
+      tables.push(table);
+    }
+  }
+
+  // 处理子题目（阅读理解等）
+  if (Array.isArray(cur.sub_questions)) {
+    for (let i = 0; i < cur.sub_questions.length; i++) {
+      subQuestions.push(parseQuestion(cur.sub_questions[i], i));
+    }
+  }
+
+  return {
+    index: cur.index ?? idx + 1,
+    type: questionType,
+    typeDesc,
+    stem,
+    options,
+    answer,
+    analysis,
+    images,
+    tables,
+    subQuestions,
+    element_list: cur.element_list || [],
+  };
+};
+
+/**
+ * 数字转中文序号
+ */
+const numberToChinese = (num: number): string => {
+  const chineseNumbers = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十',
+    '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十'];
+  if (num >= 1 && num <= 20) {
+    return chineseNumbers[num - 1];
+  }
+  return String(num);
+};

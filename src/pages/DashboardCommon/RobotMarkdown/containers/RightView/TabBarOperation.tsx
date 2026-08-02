@@ -65,6 +65,8 @@ const TabBarOperation = (props: TabBarOperationProps) => {
       list = [{ text: 'json', key: resultType }];
     } else if (resultType === ResultType.image) {
       list = [{ text: 'zip', key: resultType }];
+    } else if (resultType === ResultType.exam_paper) {
+      list = [{ text: 'json', key: resultType }];
     }
     const iconMap: Record<string, any> = {
       md: <ExportMd />,

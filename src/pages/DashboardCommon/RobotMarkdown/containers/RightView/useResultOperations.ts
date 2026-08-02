@@ -19,7 +19,7 @@ import { storeContainer } from '../../store';
 import { ResultType } from './RightView';
 import { loadXLSX } from '@/utils/xlsx';
 import type { IRectItem } from '../../utils';
-import { jsonToMarkdown } from '../../utils';
+import { jsonToMarkdown, formatExamPaper } from '../../utils';
 import { isEmpty, omit } from '@/utils/objectUtils';
 import md2html, { encodeMath, mdRender } from '../../../RobotMarkdown/MarkdownRender/md2html';
 
@@ -114,6 +114,7 @@ function useResultOperations(props: IProps) {
       [ResultType.image]: 'zip',
       [ResultType.header_footer]: 'md',
       [ResultType.question]: 'md',
+      [ResultType.exam_paper]: 'json',
     };
     const filetype = key || typeMap[currentTab] || currentTab;
     const filename: string = current?.name
@@ -252,6 +253,19 @@ function useResultOperations(props: IProps) {
     downloadFile(blob, filename);
   };
 
+  const exportExamPaper = async ({ filetype, filename }: FileExportParams) => {
+    const examData = formatExamPaper(rawResultJson);
+    if (!examData) {
+      message.warning('没有试卷数据可导出');
+      return;
+    }
+    const content = JSON.stringify(examData, null, 2);
+    const blob = new Blob([content], {
+      type: `application/${filetype}`,
+    });
+    downloadFile(blob, filename);
+  };
+
   const resultExport = async (key?: string) => {
     const { filetype, filename } = getFileTypeAndName(key);
     if (key === ResultType.doc_base64) {
@@ -266,6 +280,8 @@ function useResultOperations(props: IProps) {
       await exportFormula({ filetype, filename });
     } else if (currentTab === ResultType.image) {
       await exportImages({ filename });
+    } else if (currentTab === ResultType.exam_paper) {
+      await exportExamPaper({ filetype, filename });
     } else {
       await exportText({ filetype, filename });
     }

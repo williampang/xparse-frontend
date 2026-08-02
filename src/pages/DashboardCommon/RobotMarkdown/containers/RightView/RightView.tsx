@@ -21,6 +21,7 @@ import StampIcon from '@/assets/images/pic_seal@2x.png';
 import QrcodeIcon from '@/assets/images/pic_QRcode@2x.png';
 import BarcodeIcon from '@/assets/images/pic_barcode@2x.png';
 import TabBarOperation from './TabBarOperation';
+import ExamPaperView from '../ExamPaperView';
 import { ensureArray } from '@/utils/objectUtils';
 import { useImageTips } from '../../hooks/useImageTips';
 import { isEmpty } from '@/utils/objectUtils';
@@ -38,6 +39,7 @@ enum ResultType {
   header_footer = 'header_footer',
   doc_base64 = 'docx',
   question = 'question',
+  exam_paper = 'exam_paper',
   all = 'all',
 }
 
@@ -84,6 +86,7 @@ const tabMap: Record<string, any> = {
   [ResultType.handwriting]: '手写',
   [ResultType.header_footer]: '页眉页脚',
   [ResultType.question]: '切题',
+  [ResultType.exam_paper]: '试卷',
   [ResultType.all]: '全部',
 };
 const RightContainer: FC<IProps> = ({
@@ -125,6 +128,7 @@ const RightContainer: FC<IProps> = ({
   const options = useMemo(() => {
     const list = [
       ResultType.md,
+      ResultType.exam_paper,
       ResultType.table,
       ResultType.formula,
       ResultType.image,
@@ -134,7 +138,7 @@ const RightContainer: FC<IProps> = ({
     ];
     if (type === 'new') {
       const json = list.pop();
-      list.splice(1, 0, json as ResultType);
+      list.splice(2, 0, json as ResultType);
     }
     if (!isEmpty(result?.questions) || result?.with_questions) {
       list.splice(0, 0, ResultType.question);
@@ -252,6 +256,16 @@ const RightContainer: FC<IProps> = ({
             displayObjectSize={false}
             collapseStringsAfterLength={1000}
           />
+        </div>
+      );
+    }
+    if (resultType === ResultType.exam_paper) {
+      return (
+        <div
+          ref={resultScrollerRef}
+          className={classNames(styles.contentWrapper, resultScrollerClass)}
+        >
+          <ExamPaperView result={rawResultJson} />
         </div>
       );
     }
