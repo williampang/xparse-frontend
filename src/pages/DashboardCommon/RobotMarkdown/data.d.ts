@@ -97,6 +97,7 @@ export const QuestionCategoryDesc: Record<string, any> = {
 export interface IExamPaperOption {
   label: string; // 选项标签，如 A、B、C、D
   text: string; // 选项内容
+  contentId?: number | string; // 对应 detail 数组索引，用于定位左侧视图
 }
 
 export interface IExamPaperQuestion {
@@ -111,13 +112,15 @@ export interface IExamPaperQuestion {
   tables: any[]; // 题目表格
   subQuestions: IExamPaperQuestion[]; // 子题目（阅读理解等）
   element_list: any[]; // 原始元素列表
+  contentIds: (number | string)[]; // 该题目对应的所有 detail 块索引
 }
 
 export interface IExamPaperSection {
-  name: string; // 大题名称，如“一、选择题”
+  name: string; // 大题名称，如"一、选择题"
   questionType: number | string; // 大题题型
   questionTypeDesc: string; // 题型描述
   questions: IExamPaperQuestion[]; // 小题列表
+  contentId?: number | string; // 大题标题对应的 detail 块索引
 }
 
 export interface IExamPaperData {

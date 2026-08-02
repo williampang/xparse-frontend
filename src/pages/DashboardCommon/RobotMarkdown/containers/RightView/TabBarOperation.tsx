@@ -183,7 +183,19 @@ const TabBarOperation = (props: TabBarOperationProps) => {
     <div className={styles['tab-bar-extra']}>
       {ads}
 
-      {showEdit &&
+      {resultType === ResultType.exam_paper && (
+        <Button
+          className={classNames(styles['tab-item'], styles['tab-text'])}
+          icon={<DownloadIcon />}
+          disabled={disabled}
+          onClick={onExport}
+          loading={exportLoading}
+        >
+          导出结果
+        </Button>
+      )}
+
+      {resultType !== ResultType.exam_paper && showEdit &&
         (markdownMode === 'view' ? (
           <Button
             type="text"
@@ -205,17 +217,19 @@ const TabBarOperation = (props: TabBarOperationProps) => {
           </Button>
         ))}
 
-      <Button
-        type="text"
-        className={styles['tab-item']}
-        disabled={!showCopy || disabled}
-        onClick={() => {
-          resultCopy();
-        }}
-        loading={copyLoading}
-      >
-        <CopyIcon />
-      </Button>
+      {resultType !== ResultType.exam_paper && (
+        <Button
+          type="text"
+          className={styles['tab-item']}
+          disabled={!showCopy || disabled}
+          onClick={() => {
+            resultCopy();
+          }}
+          loading={copyLoading}
+        >
+          <CopyIcon />
+        </Button>
+      )}
 
       {canBatchExport && (
         <Dropdown
@@ -243,7 +257,7 @@ const TabBarOperation = (props: TabBarOperationProps) => {
           </Button>
         </Dropdown>
       )}
-      {!canBatchExport && exportTypes.length > 1 && (
+      {!canBatchExport && resultType !== ResultType.exam_paper && exportTypes.length > 1 && (
         <Dropdown
           overlay={
             <Menu onClick={onExport} className={styles['menu-box']}>
@@ -265,7 +279,7 @@ const TabBarOperation = (props: TabBarOperationProps) => {
           </Button>
         </Dropdown>
       )}
-      {!canBatchExport && exportTypes.length === 1 && (
+      {!canBatchExport && resultType !== ResultType.exam_paper && exportTypes.length === 1 && (
         <Tooltip
           {...tipStyle}
           title={`导出${exportTypes[0].text}`}

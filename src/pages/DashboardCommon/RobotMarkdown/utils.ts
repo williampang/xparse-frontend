@@ -872,6 +872,7 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
           ? `data:image/jpg;base64,${item.base64str}`
           : item.image_url || '';
         if (imgSrc) currentQuestion.images.push(imgSrc);
+        currentQuestion.contentIds.push(idx);
       }
       continue;
     }
@@ -880,6 +881,7 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
     if (itemType === 'table') {
       if (currentQuestion) {
         currentQuestion.tables.push(item);
+        currentQuestion.contentIds.push(idx);
       }
       continue;
     }
@@ -894,6 +896,7 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
         questionType: 'section',
         questionTypeDesc: sectionMatch[2],
         questions: [],
+        contentId: idx,
       };
       sections.push(currentSection);
       currentQuestion = null;
@@ -937,6 +940,7 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
           tables: [],
           subQuestions: [],
           element_list: [],
+          contentIds: [idx],
         };
         currentSection.questions.push(currentQuestion);
         continue;
@@ -947,7 +951,8 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
     // 3. 检测选项（如 "A." "B、" "C．"）
     const optionMatch = text.match(OPTION_REGEX);
     if (optionMatch && currentQuestion) {
-      currentQuestion.options.push({ label: optionMatch[1], text: optionMatch[2] });
+      currentQuestion.options.push({ label: optionMatch[1], text: optionMatch[2], contentId: idx });
+      currentQuestion.contentIds.push(idx);
       // 有选项说明是选择题
       if (currentQuestion.typeDesc === '') {
         currentQuestion.type = 0;
@@ -959,12 +964,14 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
     // 4. 检测答案
     if (/^\s*[【\[]?答案[】\]]?\s*[:：]?/.test(text) && currentQuestion) {
       currentQuestion.answer = text.replace(/^\s*[【\[]?答案[】\]]?\s*[:：]?\s*/, '');
+      currentQuestion.contentIds.push(idx);
       continue;
     }
 
     // 5. 检测解析
     if (/^\s*[【\[]?解析[】\]]?\s*[:：]?/.test(text) && currentQuestion) {
       currentQuestion.analysis = text.replace(/^\s*[【\[]?解析[】\]]?\s*[:：]?\s*/, '');
+      currentQuestion.contentIds.push(idx);
       continue;
     }
 
@@ -981,6 +988,7 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
           questionType: 'section',
           questionTypeDesc: text,
           questions: [],
+          contentId: idx,
         };
         sections.push(currentSection);
         currentQuestion = null;
@@ -988,6 +996,7 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
       } else {
         // 已有题目上下文，归入题干
         currentQuestion.stem += (currentQuestion.stem ? '\n' : '') + text;
+        currentQuestion.contentIds.push(idx);
       }
       continue;
     }
@@ -995,6 +1004,7 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
     // 7. 普通文本归入当前题目的题干
     if (currentQuestion) {
       currentQuestion.stem += (currentQuestion.stem ? '\n' : '') + text;
+      currentQuestion.contentIds.push(idx);
     } else if (!currentSection) {
       // 还没有任何题目，可能是试卷说明文字
       if (!title) {
@@ -1136,6 +1146,7 @@ const parseQuestion = (cur: any, idx: number): IExamPaperQuestion => {
     tables,
     subQuestions,
     element_list: cur.element_list || [],
+    contentIds: [],
   };
 };
 

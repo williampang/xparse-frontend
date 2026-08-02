@@ -338,6 +338,9 @@ function useResultOperations(props: IProps) {
           ),
       );
       setCanBatchExport(false);
+    } else if ([ResultType.exam_paper].includes(currentTab)) {
+      setCanExport(!!resultJson);
+      setCanBatchExport(false);
     } else {
       setCanExport(
         Array.isArray(current?.rects) &&
