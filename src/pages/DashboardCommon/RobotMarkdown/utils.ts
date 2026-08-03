@@ -836,8 +836,8 @@ const formatExamPaperFromQuestions = (res: any): IExamPaperData => {
   return { title, subtitle, sections, questionCount };
 };
 
-// 题号正则：匹配 "1." "2、" "（3）" "(4)" 等格式
-const QUESTION_INDEX_REGEX = /^\s*(\d{1,3})\s*[.、．)\]]/;
+// 题号正则：匹配 "1." "2、" "16．" 以及带前缀的 "（双选）16．" "(多选)3." 等格式
+const QUESTION_INDEX_REGEX = /^\s*(?:[（(][^）)\d]{1,8}[）)])?(\d{1,3})\s*[.、．)\]]/;
 // 大题标题正则：匹配 "一、选择题" "二、填空题（每空2分）" 等
 const SECTION_TITLE_REGEX = /^\s*([一二三四五六七八九十]{1,3})\s*[.、．)\]]\s*(.+)/;
 // 选项正则：匹配 "A." "B、" "C．" "D)" 等

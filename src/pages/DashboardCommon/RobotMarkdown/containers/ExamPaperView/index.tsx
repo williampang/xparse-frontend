@@ -48,6 +48,23 @@ const QuestionItem: React.FC<{ question: IExamPaperQuestion; showIndex?: boolean
         </div>
       )}
 
+      {/* 试题表格 */}
+      {question.tables.length > 0 && (
+        <div className={styles.questionTables}>
+          {question.tables.map((tbl, idx) => {
+            const html = typeof tbl === 'string' ? tbl : tbl?.text || '';
+            if (!html) return null;
+            return (
+              <div
+                key={idx}
+                className={styles.questionTableWrapper}
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            );
+          })}
+        </div>
+      )}
+
       {/* 选项（选择题） */}
       {hasOptions && (
         <div className={styles.questionOptions}>
