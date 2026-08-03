@@ -842,6 +842,8 @@ const QUESTION_INDEX_REGEX = /^\s*(?:[（(][^）)\d]{1,8}[）)])?(\d{1,3})\s*[.�
 const SECTION_TITLE_REGEX = /^\s*([一二三四五六七八九十]{1,3})\s*[.、．)\]]\s*(.+)/;
 // 选项正则：匹配 "A." "B、" "C．" "D)" 等
 const OPTION_REGEX = /^\s*([A-Za-z])\s*[.、．)\]]\s*(.*)/;
+// 选择题大题标题关键词：匹配 "选择题" "单选题" "多选题"，排除 "非选择题"
+const CHOICE_SECTION_REGEX = /(?<!\u975e)选择题|单选题|多选题/;
 
 /**
  * 从 detail 数组解析试卷结构
@@ -855,6 +857,7 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
   let currentQuestion: IExamPaperQuestion | null = null;
   let questionCount = 0;
   let lastQuestionIndex = 0; // 当前大题内上一题的题号，用于启发式判断
+  let isChoiceSection = false; // 当前大题是否为选择题板块
 
   for (let idx = 0; idx < detail.length; idx++) {
     const item = detail[idx];
@@ -865,22 +868,28 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
     // 跳过非正文内容（页眉页脚等）
     if (item.content === 1) continue;
 
-    // 处理图片类型
+    // 处理图片类型 —— 将图片嵌入题干，保持原始位置
     if (itemType === 'image') {
       if (currentQuestion) {
         const imgSrc = item.base64str
           ? `data:image/jpg;base64,${item.base64str}`
           : item.image_url || '';
-        if (imgSrc) currentQuestion.images.push(imgSrc);
+        if (imgSrc) {
+          currentQuestion.stem += (currentQuestion.stem ? '\n' : '') + `<img src="${imgSrc}" style="max-width:100%;max-height:200px" />`;
+        }
         currentQuestion.contentIds.push(idx);
       }
       continue;
     }
 
-    // 处理表格类型
+    // 处理表格类型 —— 将表格 HTML 嵌入题干，保持原始位置
+    // 使用双换行分隔，确保 react-markdown 将 <table> 识别为块级 HTML 元素
     if (itemType === 'table') {
       if (currentQuestion) {
-        currentQuestion.tables.push(item);
+        const tableHtml = item.text || '';
+        if (tableHtml) {
+          currentQuestion.stem += (currentQuestion.stem ? '\n\n' : '') + tableHtml + '\n\n';
+        }
         currentQuestion.contentIds.push(idx);
       }
       continue;
@@ -901,6 +910,7 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
       sections.push(currentSection);
       currentQuestion = null;
       lastQuestionIndex = 0;
+      isChoiceSection = CHOICE_SECTION_REGEX.test(text);
       continue;
     }
 
@@ -930,8 +940,8 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
 
         currentQuestion = {
           index: qIndex,
-          type: 'unknown',
-          typeDesc: '',
+          type: isChoiceSection ? 'choice' : 'unknown',
+          typeDesc: isChoiceSection ? '选择题' : '',
           stem: stemText,
           options: [],
           answer: '',
@@ -951,12 +961,13 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
     // 3. 检测选项（如 "A." "B、" "C．"）
     const optionMatch = text.match(OPTION_REGEX);
     if (optionMatch && currentQuestion) {
-      currentQuestion.options.push({ label: optionMatch[1], text: optionMatch[2], contentId: idx });
       currentQuestion.contentIds.push(idx);
-      // 有选项说明是选择题
-      if (currentQuestion.typeDesc === '') {
-        currentQuestion.type = 0;
-        currentQuestion.typeDesc = '选择题';
+      if (isChoiceSection) {
+        // 选择题板块：提取选项，不嵌入题干
+        currentQuestion.options.push({ label: optionMatch[1], text: optionMatch[2] });
+      } else {
+        // 综合题/非选择题板块：选项保留在题干中
+        currentQuestion.stem += (currentQuestion.stem ? '\n' : '') + text;
       }
       continue;
     }
@@ -993,6 +1004,7 @@ const formatExamPaperFromDetail = (res: any, detail: any[]): IExamPaperData | nu
         sections.push(currentSection);
         currentQuestion = null;
         lastQuestionIndex = 0;
+        isChoiceSection = CHOICE_SECTION_REGEX.test(text);
       } else {
         // 已有题目上下文，归入题干
         currentQuestion.stem += (currentQuestion.stem ? '\n' : '') + text;

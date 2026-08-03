@@ -15,7 +15,6 @@ const QuestionItem: React.FC<{ question: IExamPaperQuestion; showIndex?: boolean
   question,
   showIndex = true,
 }) => {
-  const hasOptions = question.options.length > 0;
   const questionContentId = question.contentIds.length > 0 ? question.contentIds[0] : undefined;
 
   return (
@@ -24,60 +23,25 @@ const QuestionItem: React.FC<{ question: IExamPaperQuestion; showIndex?: boolean
       data-question-content-ids={question.contentIds.join(',')}
       data-content-id={questionContentId}
     >
-      {/* 题号 + 题型标签 */}
+      {/* 题号 */}
       <div className={styles.questionHeader}>
         {showIndex && <span className={styles.questionIndex}>{question.index}.</span>}
-        <Tag color="blue" className={styles.questionTypeTag}>
-          {question.typeDesc}
-        </Tag>
       </div>
 
-      {/* 题干 */}
+      {/* 题干（包含表格、图片，按原始顺序排列） */}
       {question.stem && (
         <div className={styles.questionStem} data-content-id={questionContentId}>
           <MarkdownRender content={question.stem} />
         </div>
       )}
 
-      {/* 试题图片 */}
-      {question.images.length > 0 && (
-        <div className={styles.questionImages}>
-          {question.images.map((img, idx) => (
-            <img key={idx} src={img} className={styles.questionImg} alt={`题图${idx + 1}`} />
-          ))}
-        </div>
-      )}
-
-      {/* 试题表格 */}
-      {question.tables.length > 0 && (
-        <div className={styles.questionTables}>
-          {question.tables.map((tbl, idx) => {
-            const html = typeof tbl === 'string' ? tbl : tbl?.text || '';
-            if (!html) return null;
-            return (
-              <div
-                key={idx}
-                className={styles.questionTableWrapper}
-                dangerouslySetInnerHTML={{ __html: html }}
-              />
-            );
-          })}
-        </div>
-      )}
-
-      {/* 选项（选择题） */}
-      {hasOptions && (
+      {/* 选项（仅选择题板块的题目单独渲染选项） */}
+      {question.options.length > 0 && (
         <div className={styles.questionOptions}>
-          {question.options.map((opt) => (
-            <div
-              key={opt.label}
-              className={styles.optionItem}
-              data-content-id={opt.contentId}
-            >
+          {question.options.map((opt, idx) => (
+            <div key={idx} className={styles.optionItem}>
               <span className={styles.optionLabel}>{opt.label}.</span>
-              <span className={styles.optionText}>
-                <MarkdownRender content={opt.text} />
-              </span>
+              <span className={styles.optionText}>{opt.text}</span>
             </div>
           ))}
         </div>
