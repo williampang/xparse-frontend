@@ -36,6 +36,9 @@ const useStore = () => {
   const [markdownMode, setMarkdownMode] = useState<'view' | 'edit'>('view');
   const markdownEditorRef = useRef<Vditor | null>(null);
 
+  // 试卷编辑/查看模式
+  const [examPaperMode, setExamPaperMode] = useState<'view' | 'edit'>('view');
+
   // 是否展示markdown最新修改结果
   const [_showModifiedMarkdown, setShowModifiedMarkdown] = useState<boolean>(true);
   const showModifiedMarkdown = useMemo(
@@ -125,13 +128,14 @@ const useStore = () => {
   // 文件切换重置编辑状态
   useEffect(() => {
     setMarkdownMode('view');
+    setExamPaperMode('view');
     setShowModifiedMarkdown(true);
   }, [currentFile?.id]);
 
   const shouldSaveMarkdown = !currentFile?.isExample;
   const showAutoSave = useMemo(() => {
-    return !!shouldSaveMarkdown && markdownMode === 'edit';
-  }, [shouldSaveMarkdown, markdownMode, currentFile]);
+    return !!shouldSaveMarkdown && (markdownMode === 'edit' || examPaperMode === 'edit');
+  }, [shouldSaveMarkdown, markdownMode, examPaperMode, currentFile]);
 
   const [autoSaveMarkdown, _setAutoSaveMarkdown] = useState<boolean>(
     (localStorage.getItem('autoSaveMarkdown') ?? 'true') === 'true',
@@ -191,8 +195,7 @@ const useStore = () => {
   }, [resultJson, showModifiedMarkdown]);
 
   // 更新json结果
-  const updateResultJson = ({ value, contentItem, markdown }: ResultJsonUpdateParams) => {
-    setResultJson((pre) => {
+  const updateResultJson = ({ value, contentItem, markdown }: ResultJsonUpdateParams) => {    setResultJson((pre) => {
       let newDatail = cloneDeep([...(pre?.detail_new || pre?.detail)]);
       newDatail = newDatail.map((item, index) => {
         if (
@@ -245,6 +248,51 @@ const useStore = () => {
     });
   };
 
+  // 更新指定 detail 块的 position（左侧视图调整框位置/大小后回写），
+  // 同时同步 currentFile 的 result 与 rects，保证左侧框与右侧试卷解析数据一致
+  const updateBlockPosition = (contentId: number | string, position: number[]) => {
+    const idx = Number(contentId);
+    if (isNaN(idx) || !Array.isArray(position) || position.length < 8) return;
+
+    setResultJson((pre) => {
+      if (!pre) return pre;
+      const baseDetail = pre.detail_new || pre.detail;
+      if (!Array.isArray(baseDetail) || !baseDetail[idx]) return pre;
+      const newDetail = cloneDeep([...baseDetail]);
+      newDetail[idx] = { ...newDetail[idx], position };
+      return { ...pre, detail_new: newDetail };
+    });
+
+    setCurrentFile((pre: any) => {
+      if (!pre?.result) return pre;
+      const updateDetail = (detail?: any[]) => {
+        if (!Array.isArray(detail) || !detail[idx]) return detail;
+        const copy = [...detail];
+        copy[idx] = { ...copy[idx], position };
+        return copy;
+      };
+      const result = { ...pre.result };
+      result.detail = updateDetail(result.detail);
+      if (result.detail_new) result.detail_new = updateDetail(result.detail_new);
+
+      // 直接更新 rects/newRects 中对应块的 position，避免重新 formatResult
+      const updateRects = (rects?: any[][]) => {
+        if (!Array.isArray(rects)) return rects;
+        return rects.map((pageRects) =>
+          Array.isArray(pageRects)
+            ? pageRects.map((r) => (Number(r?.content_id) === idx ? { ...r, position } : r))
+            : pageRects,
+        );
+      };
+      return {
+        ...pre,
+        result,
+        rects: updateRects(pre.rects),
+        newRects: updateRects(pre.newRects),
+      };
+    });
+  };
+
   return {
     type: 'new',
     currentFile,
@@ -269,7 +317,10 @@ const useStore = () => {
     setRectList,
     markdownMode,
     setMarkdownMode,
+    examPaperMode,
+    setExamPaperMode,
     updateResultJson,
+    updateBlockPosition,
     markdownEditorRef,
     resultScrollerRef,
     viewerVirtuosoRef,

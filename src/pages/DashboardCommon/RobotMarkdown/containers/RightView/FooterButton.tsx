@@ -61,6 +61,7 @@ export const FooterButton = ({
     currentFile,
     markdownMode,
     setMarkdownMode,
+    setExamPaperMode,
     shouldSaveMarkdown,
     saveResultJson,
   } = storeContainer.useContainer();
@@ -321,7 +322,7 @@ export const FooterButton = ({
         externalExport={resultExport}
         currentFile={current}
         startExtra={
-          showEdit &&
+          showEdit && currentTab !== ResultType.exam_paper &&
           (markdownMode === 'view' ? (
             <Button style={{ width: 82 }} onClick={() => setMarkdownMode?.('edit')}>
               编辑

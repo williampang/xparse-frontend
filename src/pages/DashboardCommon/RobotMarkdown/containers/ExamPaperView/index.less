@@ -48,6 +48,13 @@
   color: #dcdfe5;
 }
 
+// 展示格式切换栏
+.previewModeBar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 .paperSections {
   display: flex;
   flex-direction: column;
@@ -120,6 +127,11 @@
   padding-left: 4px;
   white-space: pre-wrap;
   word-break: break-word;
+
+  // Markdown 段落收紧尾部间距，避免题干末尾多出大段空白
+  p:last-child {
+    margin-bottom: 0;
+  }
 
   // 内嵌表格样式（表格 HTML 通过 MarkdownRender 渲染）
   // 覆盖 .markdown-body 继承的 white-space: pre-wrap，避免表格内换行符被保留
@@ -262,6 +274,10 @@
 .optionText {
   flex: 1;
   word-break: break-word;
+
+  p:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .questionAnswer {
@@ -270,6 +286,10 @@
   background: #f0f9eb;
   border-radius: 4px;
   font-size: 13px;
+
+  p:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .answerLabel {
@@ -283,10 +303,42 @@
   background: #fdf6ec;
   border-radius: 4px;
   font-size: 13px;
+
+  p:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .analysisLabel {
   color: #e6a23c;
+  font-weight: 600;
+}
+
+// 试题元信息（知识点/难度/分值）
+.questionMeta {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f4f4f5;
+  border-radius: 4px;
+  font-size: 13px;
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.knowledgeLabel {
+  color: #409eff;
+  font-weight: 600;
+}
+
+.difficultyLabel {
+  color: #f56c6c;
+  font-weight: 600;
+}
+
+.scoreLabel {
+  color: #909399;
   font-weight: 600;
 }
 
@@ -301,4 +353,276 @@
   font-weight: 600;
   color: #858c99;
   margin-bottom: 8px;
+}
+
+// ==================== 编辑模式样式 ====================
+.editMode {
+  [data-content-id] {
+    cursor: default;
+  }
+
+  // 编辑模式下，未编辑的题目显示为可点击
+  .questionItem {
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+
+    &:hover {
+      background: #f5f7ff;
+      border-color: #c5d4f7;
+    }
+  }
+}
+
+// 当前正在编辑的题目
+.questionEditing {
+  background: #f0f5ff;
+  border: 1.5px solid #1a66ff;
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px rgba(26, 102, 255, 0.08);
+
+  &:hover {
+    background: #f0f5ff;
+  }
+}
+
+// “点击编辑”提示
+.editHint {
+  font-size: 12px;
+  color: #858c99;
+  margin-left: auto;
+  user-select: none;
+}
+
+.questionIndexInput {
+  width: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a66ff;
+  text-align: center;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.insertImgBtn {
+  font-size: 12px;
+  color: #1a66ff;
+  border-color: #1a66ff;
+  margin-left: auto;
+}
+
+.questionStemEdit,
+.questionAnswerEdit,
+.questionAnalysisEdit {
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+// 富文本编辑器包装样式
+.richEditorWrapper {
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+
+  &:focus-within {
+    border-color: #1a66ff;
+    box-shadow: 0 0 0 2px rgba(26, 102, 255, 0.1);
+  }
+
+  // CKEditor 内容区域最小高度
+  :global {
+    .ck.ck-editor__main .ck.ck-content {
+      min-height: var(--editor-min-height, 80px);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    // 编辑器工具栏样式
+    .ck.ck-toolbar {
+      border-radius: 4px 4px 0 0;
+      background: #fafbfc;
+    }
+
+    // 编辑器内容区域
+    .ck.ck-editor__main > .ck-editor__editable {
+      border: none;
+    }
+
+    // 图片样式
+    .ck-content img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 4px;
+    }
+
+    // 表格样式
+    .ck-content table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+
+      td, th {
+        border: 1px solid #b0b0b0;
+        padding: 5px 10px;
+      }
+    }
+  }
+}
+
+// LaTeX 公式编辑模式（textarea）
+.latexEditorWrapper {
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  transition: border-color 0.2s;
+  padding: 8px 12px;
+  background: #fafbfc;
+
+  &:focus-within {
+    border-color: #1a66ff;
+    box-shadow: 0 0 0 2px rgba(26, 102, 255, 0.1);
+  }
+
+  .latexTextArea {
+    border: none;
+    background: transparent;
+    resize: none;
+    font-family: 'Courier New', Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #030a1a;
+    padding: 0;
+
+    &:focus {
+      box-shadow: none;
+    }
+  }
+
+  .latexHint {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    text-align: right;
+  }
+}
+
+// 选项富文本编辑
+.optionRichEdit {
+  flex: 1;
+
+  .richEditorWrapper {
+    :global {
+      .ck.ck-editor__main .ck.ck-content {
+        min-height: 40px;
+      }
+    }
+  }
+}
+
+.questionAnswerEdit,
+.questionAnalysisEdit {
+  .answerLabel,
+  .analysisLabel {
+    display: block;
+    margin-bottom: 4px;
+  }
+}
+
+.optionEditItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.optionLabelInput {
+  width: 40px;
+  flex-shrink: 0;
+  text-align: center;
+  font-weight: 500;
+}
+
+.optionDot {
+  line-height: 32px;
+  flex-shrink: 0;
+}
+
+// ==================== 图片预览模式样式 ====================
+.examPaperImageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.imageModeTip {
+  font-size: 12px;
+  color: #858c99;
+  background: #f5f7fa;
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+.imageQuestionItem {
+  padding: 16px;
+  border-bottom: 1px solid #f2f3f5;
+  border-radius: 4px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: #fafbfc;
+  }
+}
+
+.cropRegionList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-left: 4px;
+}
+
+.cropRegionItem {
+  border: 1px solid #eef0f3;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    border-color: #1a66ff;
+    box-shadow: 0 2px 8px rgba(26, 102, 255, 0.12);
+  }
+}
+
+.cropImg {
+  display: block;
+  max-width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+}
+
+.cropLoading,
+.cropFailed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  padding: 12px;
+  font-size: 12px;
+  color: #858c99;
+  background: #fafbfc;
+}
+
+.regionPosInfo {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #858c99;
+  background: #f7f8fa;
+  border-top: 1px solid #eef0f3;
+}
+
+.regionLabel {
+  color: #1a66ff;
+  font-weight: 500;
 }

@@ -48,7 +48,23 @@ const TabBarOperation = (props: TabBarOperationProps) => {
     showEdit,
   } = useResultOperations(props);
 
-  const { resultType, resultJson, markdownMode } = storeContainer.useContainer();
+  const { resultType, resultJson, markdownMode, examPaperMode, setExamPaperMode, saveResultJson } = storeContainer.useContainer();
+
+  const [examPaperSaveLoading, setExamPaperSaveLoading] = useState(false);
+
+  // 试卷编辑模式：保存
+  const handleExamPaperSave = async () => {
+    setExamPaperSaveLoading(true);
+    try {
+      // 触发 ExamPaperView 内部的保存逻辑（通过自定义事件）
+      document.dispatchEvent(new CustomEvent('exam-paper-save'));
+      await saveResultJson?.(false);
+      setExamPaperMode('view');
+    } catch (error) {
+      console.error(error);
+    }
+    setExamPaperSaveLoading(false);
+  };
 
   const { Robot } = useSelector((state: ConnectState) => ({
     Robot: state.Robot,
@@ -156,18 +172,7 @@ const TabBarOperation = (props: TabBarOperationProps) => {
       autoplay
       autoplaySpeed={5000}
     >
-      <a href="https://intfinq.textin.com/financial" target="_blank">
-        <img src={intfinq} width={18} height={18} />
-        知识管理及写作助手
-      </a>
-      <a href="https://github.com/intsig-textin/chatdoc_stack?tab=readme-ov-file" target="_blank">
-        <img src={github} width={18} height={18} />
-        TextIn开源知识库
-      </a>
-      <a href="https://qw01obudp42.feishu.cn/docx/Bt6ZdIW2PohoNuxgsmNcWzyVn8d" target="_blank">
-        前端与SDK集成攻略
-      </a>
-      <a href="https://qw01obudp42.feishu.cn/docx/GmEGdWTb8ozSdkxUiSgcPQi6nJH" target="_blank">
+      <a href="JavaScript://">
         文档解析必备Tips
       </a>
     </Carousel>
@@ -194,6 +199,26 @@ const TabBarOperation = (props: TabBarOperationProps) => {
           导出结果
         </Button>
       )}
+
+      {resultType === ResultType.exam_paper && showEdit &&
+        (examPaperMode === 'view' ? (
+          <Button
+            type="text"
+            className={styles['tab-item']}
+            onClick={() => setExamPaperMode('edit')}
+          >
+            <EditIcon />
+          </Button>
+        ) : (
+          <Button
+            loading={examPaperSaveLoading}
+            onClick={handleExamPaperSave}
+            className={classNames(styles['tab-item'], styles['tab-text'])}
+            icon={<EditIcon />}
+          >
+            保存
+          </Button>
+        ))}
 
       {resultType !== ResultType.exam_paper && showEdit &&
         (markdownMode === 'view' ? (

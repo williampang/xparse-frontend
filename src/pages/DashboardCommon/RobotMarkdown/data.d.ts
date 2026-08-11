@@ -98,6 +98,18 @@ export interface IExamPaperOption {
   label: string; // 选项标签，如 A、B、C、D
   text: string; // 选项内容
   contentId?: number | string; // 对应 detail 数组索引，用于定位左侧视图
+  contentIds?: (number | string)[]; // 该选项对应的所有 detail 块索引
+}
+
+/** 题目各部分对应的 detail 块分组（用于图片预览按选项等独立裁剪） */
+export interface IExamPaperContentGroups {
+  stem: (number | string)[]; // 题干（含题图、表格等）
+  options: IExamPaperOption[]; // 各选项（带 contentIds）
+  answer: (number | string)[]; // 答案
+  analysis: (number | string)[]; // 解析
+  knowledge?: (number | string)[]; // 知识点
+  difficulty?: (number | string)[]; // 难度
+  score?: (number | string)[]; // 分值
 }
 
 export interface IExamPaperQuestion {
@@ -108,11 +120,15 @@ export interface IExamPaperQuestion {
   options: IExamPaperOption[]; // 选项列表（选择题）
   answer: string; // 答案
   analysis: string; // 解析
+  knowledge?: string; // 知识点
+  difficulty?: string; // 难度
+  score?: string; // 分值
   images: string[]; // 题目图片
   tables: any[]; // 题目表格
   subQuestions: IExamPaperQuestion[]; // 子题目（阅读理解等）
   element_list: any[]; // 原始元素列表
   contentIds: (number | string)[]; // 该题目对应的所有 detail 块索引
+  contentGroups?: IExamPaperContentGroups; // 各部分 detail 块分组（可选）
 }
 
 export interface IExamPaperSection {

@@ -123,7 +123,7 @@ const RightContainer: FC<IProps> = ({
   const { showImageDot, setShowImageDot, imageTipVisible, setImageTipVisible, hasSubImages } =
     useImageTips(currentFile);
 
-  const showAutoSaveSwitch = resultType === ResultType.md && showAutoSave;
+  const showAutoSaveSwitch = (resultType === ResultType.md || resultType === ResultType.exam_paper) && showAutoSave;
 
   const options = useMemo(() => {
     const list = [

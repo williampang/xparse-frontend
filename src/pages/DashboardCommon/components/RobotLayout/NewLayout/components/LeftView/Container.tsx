@@ -47,7 +47,7 @@ const Container = (props: IProps) => {
           height={30}
           onClick={() => history.push('/dashboard/overview')}
         />
-        <span className={styles['robot-name']}>TextIn xParse</span>
+        <span className={styles['robot-name']}>怀宇慧阅</span>
       </div>
       <div className={styles['operation-btn']}>
         {showSettings && (
@@ -56,16 +56,6 @@ const Container = (props: IProps) => {
             <RobotTour showSettings={showSettings} />
           </div>
         )}
-        <div className={styles['btn-item']}>
-          <Button
-            type="default"
-            onClick={() => {
-              window.open(`https://www.textin.com/document/pdf_to_markdown`);
-            }}
-          >
-            API文档
-          </Button>
-        </div>
       </div>
 
       <FileContainer {...props} className={styles['files-container']} />
