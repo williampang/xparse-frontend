@@ -503,20 +503,53 @@ const loadImage = (src: string) =>
     img.src = src;
   });
 
-/** 从左侧视图已渲染的页面 DOM 中获取原图（canvas/img） */
-const getPageSourceFromDom = (pageNumber: number): IPageSource | null => {
+/** 定位左侧视图指定页的根节点（pdf.js 的 .page 或 PDFRenderViewer 的 mask 容器） */
+const getPageRoot = (pageNumber: number): HTMLElement | null => {
   const markDom = document.querySelector<HTMLElement>(
     `#imgContainer [data-page-number="${pageNumber}"]`,
   );
   if (!markDom) return null;
-  const pageRoot = (markDom.closest('.page') ||
+  return ((markDom.closest('.page') ||
     markDom.closest('[class*="mask"]') ||
-    markDom.parentElement) as HTMLElement;
+    markDom.parentElement) as HTMLElement) || null;
+};
+
+/**
+ * 从左侧视图已渲染的页面 DOM 中获取原图（canvas/img）。
+ * position 坐标空间以左侧画框 SVG 的 viewBox 为准（识别框正是按该空间与页面
+ * 对齐的）：pdf.js 的 canvas 像素尺寸随左侧视图缩放变化，而 viewBox 是固定的
+ * 坐标空间，用它换算裁剪位置才能与缩放无关；取不到 viewBox 时用 pages 尺寸兜底。
+ */
+const getPageSourceFromDom = (
+  pageNumber: number,
+  fallbackCoordWidth = 0,
+  fallbackCoordHeight = 0,
+): IPageSource | null => {
+  const markDom = document.querySelector<HTMLElement>(
+    `#imgContainer [data-page-number="${pageNumber}"]`,
+  );
+  if (!markDom) return null;
+  const pageRoot = getPageRoot(pageNumber);
   if (!pageRoot) return null;
+
+  let coordWidth = fallbackCoordWidth;
+  let coordHeight = fallbackCoordHeight;
+  const svgDom =
+    markDom.tagName.toLowerCase() === 'svg'
+      ? (markDom as unknown as SVGSVGElement)
+      : pageRoot.querySelector<SVGSVGElement>('svg.rectLayer[viewBox]') ||
+        pageRoot.querySelector<SVGSVGElement>('svg[data-page-number][viewBox]') ||
+        pageRoot.querySelector<SVGSVGElement>('svg[viewBox]');
+  const viewBox = svgDom?.getAttribute('viewBox') || '';
+  const vb = viewBox.split(/\s+/).map(Number);
+  if (vb.length === 4 && vb[2] > 0 && vb[3] > 0) {
+    coordWidth = vb[2];
+    coordHeight = vb[3];
+  }
 
   const canvas = pageRoot.querySelector<HTMLCanvasElement>('canvas');
   if (canvas && canvas.width > 0) {
-    return { img: canvas, width: canvas.width, height: canvas.height, coordWidth: 0, coordHeight: 0 };
+    return { img: canvas, width: canvas.width, height: canvas.height, coordWidth, coordHeight };
   }
   const imgEl = pageRoot.querySelector<HTMLImageElement>('img[src]');
   if (imgEl && imgEl.complete && imgEl.naturalWidth > 0) {
@@ -524,11 +557,72 @@ const getPageSourceFromDom = (pageNumber: number): IPageSource | null => {
       img: imgEl,
       width: imgEl.naturalWidth,
       height: imgEl.naturalHeight,
-      coordWidth: 0,
-      coordHeight: 0,
+      coordWidth,
+      coordHeight,
     };
   }
   return null;
+};
+
+/**
+ * 获取图源当前的像素尺寸。canvas 是活引用：左侧视图缩放后 pdf.js 会重设其
+ * 宽高，必须实时读取，不能用缓存 IPageSource 时的快照数值，否则缩放后裁剪
+ * 仍按旧尺寸换算导致位置偏移
+ */
+const getSourcePixelSize = (source: IPageSource): { width: number; height: number } => {
+  if (source.img instanceof HTMLCanvasElement) {
+    return { width: source.img.width, height: source.img.height };
+  }
+  return { width: source.width, height: source.height };
+};
+
+/**
+ * 实时读取左侧视图指定页当前的显示换算比率（CSS 显示尺寸 / 画布像素尺寸）。
+ * 左侧预览缩放后 canvas/img 的显示尺寸会变化，裁剪时存的快照会过时，
+ * 展示层必须在渲染时重新读取
+ */
+const getLiveDisplayRate = (
+  pageNumber: number,
+): { rateX: number; rateY: number } | null => {
+  const pageRoot = getPageRoot(pageNumber);
+  if (!pageRoot) return null;
+  const canvas = pageRoot.querySelector<HTMLCanvasElement>('canvas');
+  if (canvas && canvas.width > 0) {
+    const cssWidth = parseFloat(canvas.style.width) || canvas.getBoundingClientRect().width;
+    const cssHeight = parseFloat(canvas.style.height) || canvas.getBoundingClientRect().height;
+    if (cssWidth > 0 && cssHeight > 0) {
+      return { rateX: cssWidth / canvas.width, rateY: cssHeight / canvas.height };
+    }
+  }
+  const imgEl = pageRoot.querySelector<HTMLImageElement>('img[src]');
+  if (imgEl && imgEl.complete && imgEl.naturalWidth > 0) {
+    const cssWidth = imgEl.width || imgEl.getBoundingClientRect().width;
+    const cssHeight = imgEl.height || imgEl.getBoundingClientRect().height;
+    if (cssWidth > 0 && cssHeight > 0) {
+      return { rateX: cssWidth / imgEl.naturalWidth, rateY: cssHeight / imgEl.naturalHeight };
+    }
+  }
+  return null;
+};
+
+/**
+ * 跟随左侧预览尺寸变化的实时换算比率：用 ResizeObserver 监听页面根节点
+ * （pdf.js 的 .page / PDFRenderViewer 的 mask 容器，缩放时尺寸都会变化），
+ * 尺寸变化时触发重渲染重新读取最新比率
+ */
+const useLiveDisplayRate = (pageNumber: number) => {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    const pageRoot = getPageRoot(pageNumber);
+    if (!pageRoot) return undefined;
+    const observer = new ResizeObserver(() => {
+      setTick((t) => t + 1);
+    });
+    observer.observe(pageRoot);
+    return () => observer.disconnect();
+  }, [pageNumber]);
+  return getLiveDisplayRate(pageNumber);
 };
 
 /** 页面原图缓存，key: `${pages.length}_${pageId}_${来源标识}` */
@@ -561,9 +655,10 @@ const getPageImageSource = (result: any, pageId: number): Promise<IPageSource | 
     } catch (e) {
       // 继续走 DOM 兜底
     }
-    // DOM 兜底：左侧视图已渲染的页面
+    // DOM 兜底：左侧视图已渲染的页面。把 pages 尺寸作为坐标空间兜底值传入，
+    // 优先采用左侧画框 SVG viewBox（见 getPageSourceFromDom）
     if (pageIndex >= 0) {
-      return getPageSourceFromDom(pageIndex + 1);
+      return getPageSourceFromDom(pageIndex + 1, coordWidth, coordHeight);
     }
     return null;
   })();
@@ -585,10 +680,31 @@ interface ICropResult {
   dataUrl: string;
   width: number;
   height: number;
+  /**
+   * 像素 → 左侧视图当前显示的换算比率（CSS 显示尺寸 / 画布像素尺寸）。
+   * 仅 PDF 的 DOM 源（canvas/img）才有：裁剪图像素尺寸随左侧缩放变化，
+   * 乘以该比率后显示尺寸与区域在左侧视图中的实际显示大小一致
+   */
+  displayRateX?: number;
+  displayRateY?: number;
 }
 
 /** 裁剪结果缓存 */
 const cropCache = new Map<string, ICropResult>();
+
+/**
+ * 按区域前缀查找已缓存的裁剪图：缓存 key 附带了图源像素尺寸（区分左侧
+ * 不同缩放），同步预取时只能按区域前缀模糊命中任意一份缓存
+ */
+const getCachedCrop = (regionKey: string): ICropResult | null => {
+  const exact = cropCache.get(regionKey);
+  if (exact) return exact;
+  const prefix = `${regionKey}_`;
+  for (const [key, value] of cropCache) {
+    if (key.startsWith(prefix)) return value;
+  }
+  return null;
+};
 
 /** 计算指定页所有块的位置外包范围（用于校验坐标空间） */
 const getPageBlockExtent = (result: any, pageId: number): { maxX: number; maxY: number } => {
@@ -616,30 +732,31 @@ const cropRegion = async (
   isPdf: boolean,
 ): Promise<ICropResult> => {
   const cacheKey = `${isPdf ? 'pdf' : 'image'}_${region.pageId}_${region.bbox.x}_${region.bbox.y}_${region.bbox.w}_${region.bbox.h}`;
-  const cached = cropCache.get(cacheKey);
-  if (cached) return cached;
 
   const source = await getPageImageSource(result, region.pageId);
   if (!source) throw new Error('page source not found');
 
-  // position 与左侧 PDF 遮罩共用 pages.width/height 坐标系。PDF 下载图片的
-  // 像素尺寸可能不同于该页面坐标系，不能用原图宽高比反推，否则会把坐标缩小到约 80%。
-  const coordWidth = source.coordWidth || source.width;
-  const coordHeight = source.coordHeight || source.height;
+  // canvas 像素尺寸随左侧视图缩放变化，必须实时读取（不能用缓存的快照值）；
+  // 缩放变化后同一区域的裁剪需重算，缓存 key 附带当前像素尺寸以隔离不同缩放
+  const { width: srcWidth, height: srcHeight } = getSourcePixelSize(source);
+  const scaledCacheKey = `${cacheKey}_${srcWidth}x${srcHeight}`;
+  const cached = cropCache.get(scaledCacheKey);
+  if (cached) return cached;
 
-  // PDF 的页面坐标尺寸和渲染图片像素尺寸可能宽高比不同，横纵轴必须分别换算。
-  const scaleX = source.width / coordWidth;
-  const scaleY = source.height / coordHeight;
+  // position 与左侧识别框共用同一坐标空间（pages.width/height 或左侧画框 SVG
+  // viewBox）。缩放比例 = 当前像素尺寸 / 坐标空间尺寸，天然包含了左侧视图的
+  // 缩放与 DPI 差异，因此不需要额外的固定缩放系数
+  const coordWidth = source.coordWidth || srcWidth;
+  const coordHeight = source.coordHeight || srcHeight;
+
+  // 页面坐标尺寸和渲染图片像素尺寸可能宽高比不同，横纵轴必须分别换算。
+  const scaleX = srcWidth / coordWidth;
+  const scaleY = srcHeight / coordHeight;
   const pad = 6; // 页面坐标系下向外扩边，避免裁掉边缘内容
-  // PDF 的 position 坐标以 72 DPI 输出，而预览原图采用 96 DPI：96 / 72 = 4 / 3。
-  const positionScale = isPdf ? 4 / 3 : 1;
-  const x = Math.max(0, (region.bbox.x - pad) * positionScale);
-  const y = Math.max(0, (region.bbox.y - pad) * positionScale);
-  const w = Math.min((region.bbox.w + pad * 2) * positionScale, coordWidth - x);
-  const h = Math.min(
-    (region.bbox.h + pad * 2) * positionScale,
-    (coordHeight || coordWidth) - y,
-  );
+  const x = Math.max(0, region.bbox.x - pad);
+  const y = Math.max(0, region.bbox.y - pad);
+  const w = Math.min(region.bbox.w + pad * 2, coordWidth - x);
+  const h = Math.min(region.bbox.h + pad * 2, (coordHeight || coordWidth) - y);
   if (w <= 0 || h <= 0) throw new Error('invalid region');
 
   const canvas = document.createElement('canvas');
@@ -661,8 +778,35 @@ const cropRegion = async (
     canvas.height,
   );
   const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-  const cropResult: ICropResult = { dataUrl, width: canvas.width, height: canvas.height };
-  cropCache.set(cacheKey, cropResult);
+  // PDF 的 DOM 源（pdf.js canvas 或页面 img）像素尺寸包含设备像素比与左侧视图
+  // 缩放，读取其 CSS 显示尺寸得到换算比率，供展示层把裁剪图还原为左侧视图
+  // 当前缩放下的实际显示大小；base64/下载图源不在 DOM 中，读不到时保持缺省
+  let displayRateX: number | undefined;
+  let displayRateY: number | undefined;
+  if (isPdf) {
+    const el = source.img;
+    let cssWidth = 0;
+    let cssHeight = 0;
+    if (el instanceof HTMLCanvasElement) {
+      cssWidth = parseFloat(el.style.width) || el.getBoundingClientRect().width;
+      cssHeight = parseFloat(el.style.height) || el.getBoundingClientRect().height;
+    } else if (el instanceof HTMLImageElement) {
+      cssWidth = el.width;
+      cssHeight = el.height;
+    }
+    if (cssWidth > 0 && cssHeight > 0) {
+      displayRateX = cssWidth / srcWidth;
+      displayRateY = cssHeight / srcHeight;
+    }
+  }
+  const cropResult: ICropResult = {
+    dataUrl,
+    width: canvas.width,
+    height: canvas.height,
+    displayRateX,
+    displayRateY,
+  };
+  cropCache.set(scaledCacheKey, cropResult);
   return cropResult;
 };
 
@@ -673,9 +817,11 @@ const CropRegionImage: React.FC<{ result: any; region: IQuestionRegion; isPdf: b
   isPdf,
 }) => {
   const regionKey = `${isPdf ? 'pdf' : 'image'}_${region.pageId}_${region.bbox.x}_${region.bbox.y}_${region.bbox.w}_${region.bbox.h}`;
-  const [crop, setCrop] = useState<ICropResult | null>(() => cropCache.get(regionKey) || null);
+  const [crop, setCrop] = useState<ICropResult | null>(() => getCachedCrop(regionKey));
   const [failed, setFailed] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
+  // 实时换算比率：随左侧预览缩放变化，读不到时回退裁剪时的快照值
+  const liveRate = useLiveDisplayRate(region.pageNumber);
 
   useEffect(() => {
     if (crop) return;
@@ -707,15 +853,23 @@ const CropRegionImage: React.FC<{ result: any; region: IQuestionRegion; isPdf: b
   }, [regionKey, result, isPdf, retryKey]);
 
   if (crop) {
+    // PDF 模式的 DOM 源裁剪图按左侧视图当前缩放的换算比率显示（与区域在
+    // 左侧的实际显示大小一致）；其余情况限制为实际像素的 1/1.5，避免放大模糊。
+    // 比率优先取实时值（跟随左侧预览尺寸变化），读不到时用裁剪时的快照兜底
+    const rateXLive = liveRate?.rateX ?? crop.displayRateX;
+    const rateYLive = liveRate?.rateY ?? crop.displayRateY;
+    const rateX = isPdf && rateXLive ? (1 / 1.5) * (1 / rateXLive) : 1 / 1.5;
+    const rateY = isPdf && rateYLive ? (1 / 1.5) * (1 / rateYLive) : 1 / 1.5;
     return (
       <img
         className={styles.cropImg}
         src={crop.dataUrl}
         alt={`第${region.pageNumber}页区域`}
-        data-width={`${crop.width}px`}
-        data-height={`${crop.height}px`}
-        // 限制最大显示尺寸不超过裁剪图实际像素，避免放大模糊
-        style={{ maxWidth: `${crop.width / 1.5}px`, maxHeight: `${crop.height / 1.5}px` }}
+        data-rateX={rateXLive}
+        data-rateY={rateYLive}
+        data-width={`${crop.width / (isPdf && rateXLive ? rateXLive : 1)}px`}
+        data-height={`${crop.height / (isPdf && rateXLive ? rateXLive : 1)}px`}
+        style={{ maxWidth: `${crop.width * rateX}px`, maxHeight: `${crop.height * rateY}px` }}
       />
     );
   }

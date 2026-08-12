@@ -172,7 +172,7 @@ const TabBarOperation = (props: TabBarOperationProps) => {
       autoplay
       autoplaySpeed={5000}
     >
-      <a href="JavaScript://">
+      <a>
         文档解析必备Tips
       </a>
     </Carousel>
