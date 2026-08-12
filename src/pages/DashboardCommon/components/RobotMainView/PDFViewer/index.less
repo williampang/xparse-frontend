@@ -17,6 +17,15 @@
 @table-color: #11a35f;
 @header-footer-color: #637599; // 页眉页脚
 
+// 试卷查看模式下（ExamPaperView 给 body 加 exam-rect-adjust-enabled），
+// pdf.js 的 textLayer（z-index 11）盖在 rectLayer（z-index 10）之上会拦截鼠标事件，
+// 导致识别框无法点击/拖拽，让其穿透指针事件；其他场景 textLayer 行为不变
+:global {
+  body.exam-rect-adjust-enabled .pdfViewer .page .textLayer {
+    pointer-events: none;
+  }
+}
+
 .pdf-viewer {
   position: absolute;
   top: 0;

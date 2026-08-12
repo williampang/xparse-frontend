@@ -418,6 +418,18 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
     onCommit: updateBlockPosition,
   });
 
+  // PDF 左侧视图的 pdf.js textLayer（z-index 11）盖在 rectLayer（z-index 10）之上，
+  // 会拦截所有鼠标事件导致识别框无法点击/拖拽；查看模式下让其穿透指针事件，
+  // 与 useRectAdjust 的启用条件保持一致（编辑模式下恢复）
+  useEffect(() => {
+    const className = 'exam-rect-adjust-enabled';
+    if (examPaperMode !== 'edit') {
+      document.body.classList.add(className);
+      return () => document.body.classList.remove(className);
+    }
+    return undefined;
+  }, [examPaperMode]);
+
   // 左侧点击空白处清除编辑态时，同步清除右侧高亮
   useEffect(() => {
     const handleRectAdjustClear = () => {
