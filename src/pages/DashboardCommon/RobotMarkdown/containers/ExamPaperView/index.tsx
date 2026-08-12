@@ -7,13 +7,14 @@ import MarkdownRender from '../../MarkdownRender/MarkdownRender';
 import useMathJaxLoad, { useRefreshMath } from '../../MathJaxRender/useMathJaxLoad';
 import { storeContainer } from '../../store';
 import ExamPaperRichEditor, { textToHtml } from './ExamPaperRichEditor';
-import ExamPaperImageView from './ExamPaperImageView';
+import ExamPaperImageView, { resetExamPaperImageCaches } from './ExamPaperImageView';
 import useRectAdjust, { RECT_ADJUST_CLEAR_EVENT } from './useRectAdjust';
 import { clearAllActive, highlightLeftViewRects } from './helpers';
 import styles from './index.less';
 
 interface IProps {
   result: any;
+  isPdf?: boolean;
 }
 
 /** 从 result detail 中根据 contentId 获取图片 base64 */
@@ -405,7 +406,7 @@ const SectionItem: React.FC<{
 const QUESTION_INDEX_REGEX = /^\s*(?:[（(][^）)\d]{1,8}[）)])?(\d{1,3})\s*[.、．)\]]/;
 
 /** 试卷结构视图 */
-const ExamPaperView: React.FC<IProps> = ({ result }) => {
+const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { examPaperMode, setResultJson, updateBlockPosition } = storeContainer.useContainer();
 
@@ -442,6 +443,14 @@ const ExamPaperView: React.FC<IProps> = ({ result }) => {
 
   // CKEditor 实例注册表，用于图片插入等操作
   const editorRegistry = useRef<EditorRegistry>(new Map()).current;
+
+  // result 变化（切换解析文件）时清空图片预览的模块级缓存，避免上一份
+  // 文档的裁剪图/页面原图因坐标相同被新文件命中，导致预览图与实际位置不符
+  const lastResultRef = useRef<any>(null);
+  if (lastResultRef.current !== result) {
+    lastResultRef.current = result;
+    resetExamPaperImageCaches();
+  }
 
   // 当 result 变化时，重新计算 examData
   const examData: IExamPaperData | null = useMemo(() => {
@@ -795,7 +804,7 @@ const ExamPaperView: React.FC<IProps> = ({ result }) => {
       )}
 
       {isImagePreview ? (
-        <ExamPaperImageView result={result} data={displayData} />
+        <ExamPaperImageView result={result} data={displayData} isPdf={isPdf} />
       ) : (
         /* 大题列表 */
         <div className={styles.paperSections}>

@@ -183,6 +183,23 @@ const splitBBoxByCutLines = (bbox, cutLines) => {
   return parts;
 };
 
+const getPageBlockExtent = (result, pageId) => {
+  let maxX = 0, maxY = 0;
+  const detail = result?.detail_new || result?.detail;
+  if (Array.isArray(detail)) {
+    for (const item of detail) {
+      if (Number(item.page_id) !== pageId) continue;
+      const pos = getBlockPosition(item);
+      if (!pos) continue;
+      for (let i = 0; i < pos.length; i += 2) {
+        maxX = Math.max(maxX, pos[i]);
+        maxY = Math.max(maxY, pos[i + 1]);
+      }
+    }
+  }
+  return { maxX, maxY };
+};
+
 const blocksToRegions = (result, blocks) => {
   if (!blocks.length) return [];
   const pages = Array.isArray(result?.pages) ? result.pages : [];
@@ -197,7 +214,9 @@ const blocksToRegions = (result, blocks) => {
   byPage.forEach((pageBlocks, pageId) => {
     const pageIndex = pages.findIndex((p) => p?.page_id === pageId);
     const pageNumber = pageIndex >= 0 ? pageIndex + 1 : pageId + 1;
-    const pageWidth = typeof pages[pageIndex]?.width === 'number' && pages[pageIndex].width > 0 ? pages[pageIndex].width : 1190;
+    const pageWidthBase = typeof pages[pageIndex]?.width === 'number' && pages[pageIndex].width > 0 ? pages[pageIndex].width : 1190;
+    const blockExtent = getPageBlockExtent(result, pageId);
+    const pageWidth = blockExtent.maxX > pageWidthBase * 1.02 ? Math.max(blockExtent.maxX * 1.05, 1) : pageWidthBase;
     const gutters = detectPageGutters(result, pageId, pageWidth);
     gutterMidsByPage.set(pageId, gutters.map(([g0, g1]) => (g0 + g1) / 2));
     const textBlocks = pageBlocks.filter((b) => !b.isImage);

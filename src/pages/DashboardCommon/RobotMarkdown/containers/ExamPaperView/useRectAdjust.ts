@@ -263,9 +263,29 @@ const useRectAdjust = ({ enabled, detail, onCommit }: IUseRectAdjustOptions) => 
 
       let currentBBox = { ...startBBox };
       paint(currentBBox);
-      guardSelfMutation(() => {
-        parent.insertBefore(group, polygon.nextSibling);
-      });
+      // 把 active polygon 与其手柄分组移到父容器末尾置顶：SVG 按文档顺序绘制，
+      // 后面的兄弟元素会覆盖前面的，不置顶则重叠的图块会盖住拖拽手柄导致无法操作；
+      // 记录原始位置，卸载时恢复原位，不改变文档原有渲染顺序
+      const restoreTopMost = (() => {
+        const prevSibling = polygon.previousElementSibling;
+        guardSelfMutation(() => {
+          parent.appendChild(polygon);
+          parent.appendChild(group);
+        });
+        return () => {
+          guardSelfMutation(() => {
+            if (!polygon.parentNode) return;
+            // 原始兄弟节点可能已被重渲染移除，此时兜底插到父容器头部（保持手柄紧随 polygon）
+            const refNode =
+              prevSibling && prevSibling.parentNode === parent
+                ? prevSibling.nextSibling
+                : parent.firstChild;
+            if (refNode && refNode.parentNode !== parent) return;
+            parent.insertBefore(polygon, refNode);
+            parent.insertBefore(group, polygon.nextSibling);
+          });
+        };
+      })();
 
       // 拖拽期间让 polygon 任意位置可命中（含透明填充区域）
       const prevPointerEvents = polygon.style.pointerEvents;
@@ -393,6 +413,7 @@ const useRectAdjust = ({ enabled, detail, onCommit }: IUseRectAdjustOptions) => 
         window.removeEventListener('mouseup', onWindowUp);
         polygon.style.pointerEvents = prevPointerEvents;
         polygon.style.cursor = prevCursor;
+        restoreTopMost();
         guardSelfMutation(() => {
           group.parentNode?.removeChild(group);
         });

@@ -1,0 +1,3401 @@
+{
+  "title": "2024年浙江省高校招生职业技能理论考试",
+  "subtitle": "汽车类试题卷",
+  "sections": [
+    {
+      "name": "考生注意：",
+      "questionType": "section",
+      "questionTypeDesc": "考生注意：",
+      "questions": [
+        {
+          "index": 1,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "答题前，请务必将自己的姓名、准考证号用黑色字迹的签字笔或钢笔分别填写在试题卷和答题纸规定的位置上。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            6
+          ],
+          "contentGroups": {
+            "stem": [
+              6
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 2,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "答题时，请按照答题纸上“注意事项”的要求，在答题纸相应的位置上规范作答，在本试题卷上的作答一律无效。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            7
+          ],
+          "contentGroups": {
+            "stem": [
+              7
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        }
+      ],
+      "contentId": 5
+    },
+    {
+      "name": "一、单项选择题（本大题共20小题，每小题2分，共40分）",
+      "questionType": "section",
+      "questionTypeDesc": "单项选择题（本大题共20小题，每小题2分，共40分）",
+      "questions": [
+        {
+          "index": 1,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "以下绘图比例中，不是优先选用的放大比例是 ()",
+          "options": [
+            {
+              "label": "A",
+              "text": "2:1",
+              "contentIds": [
+                11
+              ]
+            },
+            {
+              "label": "B",
+              "text": "4:1",
+              "contentIds": [
+                12
+              ]
+            },
+            {
+              "label": "C",
+              "text": "5:1",
+              "contentIds": [
+                13
+              ]
+            },
+            {
+              "label": "D",
+              "text": "10:1",
+              "contentIds": [
+                14
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            10,
+            11,
+            12,
+            13,
+            14
+          ],
+          "contentGroups": {
+            "stem": [
+              10
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "2:1",
+                "contentIds": [
+                  11
+                ]
+              },
+              {
+                "label": "B",
+                "text": "4:1",
+                "contentIds": [
+                  12
+                ]
+              },
+              {
+                "label": "C",
+                "text": "5:1",
+                "contentIds": [
+                  13
+                ]
+              },
+              {
+                "label": "D",
+                "text": "10:1",
+                "contentIds": [
+                  14
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 2,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "关于链传动的表述，错误的是 ()",
+          "options": [
+            {
+              "label": "A",
+              "text": "链传动适用于中心距小或急速反向传动的场合",
+              "contentIds": [
+                16
+              ]
+            },
+            {
+              "label": "B",
+              "text": "链传动的链节运动为多边形运动，所以瞬时传动不恒定",
+              "contentIds": [
+                17
+              ]
+            },
+            {
+              "label": "C",
+              "text": "传动链主要应用在一般机械中传递运动和动力，也可应用于输送场合",
+              "contentIds": [
+                18
+              ]
+            },
+            {
+              "label": "D",
+              "text": "无弹性滑动和打滑现象，但磨损后易发生脱链现象",
+              "contentIds": [
+                19
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "contentGroups": {
+            "stem": [
+              15
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "链传动适用于中心距小或急速反向传动的场合",
+                "contentIds": [
+                  16
+                ]
+              },
+              {
+                "label": "B",
+                "text": "链传动的链节运动为多边形运动，所以瞬时传动不恒定",
+                "contentIds": [
+                  17
+                ]
+              },
+              {
+                "label": "C",
+                "text": "传动链主要应用在一般机械中传递运动和动力，也可应用于输送场合",
+                "contentIds": [
+                  18
+                ]
+              },
+              {
+                "label": "D",
+                "text": "无弹性滑动和打滑现象，但磨损后易发生脱链现象",
+                "contentIds": [
+                  19
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 3,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "已知铰链四杆机构的连杆长度为140mm，机架长度为100mm，一个连架杆长度为50mm，要实现双摇杆机构，则另一个连架杆可取的长度为 ()",
+          "options": [
+            {
+              "label": "A",
+              "text": "300mm或80mm B.200mm或80mm C.190mm或30mm D.180mm或90mm",
+              "contentIds": [
+                21
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            20,
+            21
+          ],
+          "contentGroups": {
+            "stem": [
+              20
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "300mm或80mm B.200mm或80mm C.190mm或30mm D.180mm或90mm",
+                "contentIds": [
+                  21
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 4,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "图示各轮系中，齿轮和蜗杆蜗轮转向标注均正确的是 ()\n<img src=\"https://web-api.textin.com/ocr_image/external/db765c5ce9d44d9d.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/ac9225621585a146.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/5d38bae7c8a98c89.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/abf4cf6522a93269.jpg\" style=\"max-width:100%;max-height:200px\" />",
+          "options": [
+            {
+              "label": "A",
+              "text": "",
+              "contentIds": [
+                27
+              ]
+            },
+            {
+              "label": "B",
+              "text": "",
+              "contentIds": [
+                28
+              ]
+            },
+            {
+              "label": "C",
+              "text": "",
+              "contentIds": [
+                29
+              ]
+            },
+            {
+              "label": "D",
+              "text": "",
+              "contentIds": [
+                30
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30
+          ],
+          "contentGroups": {
+            "stem": [
+              22,
+              23,
+              24,
+              25,
+              26
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "",
+                "contentIds": [
+                  27
+                ]
+              },
+              {
+                "label": "B",
+                "text": "",
+                "contentIds": [
+                  28
+                ]
+              },
+              {
+                "label": "C",
+                "text": "",
+                "contentIds": [
+                  29
+                ]
+              },
+              {
+                "label": "D",
+                "text": "",
+                "contentIds": [
+                  30
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 5,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "按照承受载荷的类型，题图中主动锥齿轮轴属于 ( )\n<img src=\"https://web-api.textin.com/ocr_image/external/bc1d8f94e5635c36.jpg\" style=\"max-width:100%;max-height:200px\" />",
+          "options": [
+            {
+              "label": "A",
+              "text": "转动心轴",
+              "contentIds": [
+                32
+              ]
+            },
+            {
+              "label": "B",
+              "text": "固定心轴",
+              "contentIds": [
+                33
+              ]
+            },
+            {
+              "label": "C",
+              "text": "传动轴",
+              "contentIds": [
+                34
+              ]
+            },
+            {
+              "label": "D",
+              "text": "转轴",
+              "contentIds": [
+                35,
+                36
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            31,
+            32,
+            33,
+            34,
+            35,
+            36
+          ],
+          "contentGroups": {
+            "stem": [
+              31
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "转动心轴",
+                "contentIds": [
+                  32
+                ]
+              },
+              {
+                "label": "B",
+                "text": "固定心轴",
+                "contentIds": [
+                  33
+                ]
+              },
+              {
+                "label": "C",
+                "text": "传动轴",
+                "contentIds": [
+                  34
+                ]
+              },
+              {
+                "label": "D",
+                "text": "转轴",
+                "contentIds": [
+                  35,
+                  36
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 6,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "主要承受径向载荷，也可承受一定轴向载荷的轴承是 ( ) 第5题图",
+          "options": [
+            {
+              "label": "A",
+              "text": "滚针轴承",
+              "contentIds": [
+                38
+              ]
+            },
+            {
+              "label": "B",
+              "text": "推力球轴承",
+              "contentIds": [
+                39
+              ]
+            },
+            {
+              "label": "C",
+              "text": "圆柱滚子轴承",
+              "contentIds": [
+                40
+              ]
+            },
+            {
+              "label": "D",
+              "text": "深沟球轴承",
+              "contentIds": [
+                41
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            37,
+            38,
+            39,
+            40,
+            41
+          ],
+          "contentGroups": {
+            "stem": [
+              37
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "滚针轴承",
+                "contentIds": [
+                  38
+                ]
+              },
+              {
+                "label": "B",
+                "text": "推力球轴承",
+                "contentIds": [
+                  39
+                ]
+              },
+              {
+                "label": "C",
+                "text": "圆柱滚子轴承",
+                "contentIds": [
+                  40
+                ]
+              },
+              {
+                "label": "D",
+                "text": "深沟球轴承",
+                "contentIds": [
+                  41
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 7,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "以下车标不属于我国自主品牌的是 ()\n<img src=\"https://web-api.textin.com/ocr_image/external/f0c3274be9c35431.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/eef53c1863d0bf71.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/13304f1f81b295a9.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/bc3d51ba21d44094.jpg\" style=\"max-width:100%;max-height:200px\" />",
+          "options": [
+            {
+              "label": "A",
+              "text": "",
+              "contentIds": [
+                48
+              ]
+            },
+            {
+              "label": "B",
+              "text": "",
+              "contentIds": [
+                49
+              ]
+            },
+            {
+              "label": "C",
+              "text": "",
+              "contentIds": [
+                50
+              ]
+            },
+            {
+              "label": "D",
+              "text": "",
+              "contentIds": [
+                51
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51
+          ],
+          "contentGroups": {
+            "stem": [
+              43,
+              44,
+              45,
+              46,
+              47
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "",
+                "contentIds": [
+                  48
+                ]
+              },
+              {
+                "label": "B",
+                "text": "",
+                "contentIds": [
+                  49
+                ]
+              },
+              {
+                "label": "C",
+                "text": "",
+                "contentIds": [
+                  50
+                ]
+              },
+              {
+                "label": "D",
+                "text": "",
+                "contentIds": [
+                  51
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 8,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "VIN编码中第10位代表车辆年份或年款，可以保证最长不重号 ( )",
+          "options": [
+            {
+              "label": "A",
+              "text": "35年",
+              "contentIds": [
+                53
+              ]
+            },
+            {
+              "label": "B",
+              "text": "30年",
+              "contentIds": [
+                54
+              ]
+            },
+            {
+              "label": "C",
+              "text": "25年",
+              "contentIds": [
+                55
+              ]
+            },
+            {
+              "label": "D",
+              "text": "20年",
+              "contentIds": [
+                56
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            52,
+            53,
+            54,
+            55,
+            56
+          ],
+          "contentGroups": {
+            "stem": [
+              52
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "35年",
+                "contentIds": [
+                  53
+                ]
+              },
+              {
+                "label": "B",
+                "text": "30年",
+                "contentIds": [
+                  54
+                ]
+              },
+              {
+                "label": "C",
+                "text": "25年",
+                "contentIds": [
+                  55
+                ]
+              },
+              {
+                "label": "D",
+                "text": "20年",
+                "contentIds": [
+                  56
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 9,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "普通划规不能用来 ( )",
+          "options": [
+            {
+              "label": "A",
+              "text": "划圆",
+              "contentIds": [
+                58
+              ]
+            },
+            {
+              "label": "B",
+              "text": "划等分线",
+              "contentIds": [
+                59
+              ]
+            },
+            {
+              "label": "C",
+              "text": "量取尺寸",
+              "contentIds": [
+                60
+              ]
+            },
+            {
+              "label": "D",
+              "text": "测量尺寸",
+              "contentIds": [
+                61
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            57,
+            58,
+            59,
+            60,
+            61
+          ],
+          "contentGroups": {
+            "stem": [
+              57
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "划圆",
+                "contentIds": [
+                  58
+                ]
+              },
+              {
+                "label": "B",
+                "text": "划等分线",
+                "contentIds": [
+                  59
+                ]
+              },
+              {
+                "label": "C",
+                "text": "量取尺寸",
+                "contentIds": [
+                  60
+                ]
+              },
+              {
+                "label": "D",
+                "text": "测量尺寸",
+                "contentIds": [
+                  61
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 10,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "关于拆装工具的使用，描述有错误的是 ()",
+          "options": [
+            {
+              "label": "A",
+              "text": "使用螺钉旋具时要对准螺钉轴线，扭转的同时要施加一定的压力，以免旋具滑脱",
+              "contentIds": [
+                63
+              ]
+            },
+            {
+              "label": "B",
+              "text": "使用力矩扳手时，禁止以推的方式进行扳转",
+              "contentIds": [
+                64
+              ]
+            },
+            {
+              "label": "C",
+              "text": "棘轮手柄式套简扳手使用方便，适合拆装所有的螺栓或螺母",
+              "contentIds": [
+                65
+              ]
+            },
+            {
+              "label": "D",
+              "text": "禁止用鲤鱼钳、尖嘴钳夹持高温机件",
+              "contentIds": [
+                66
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            62,
+            63,
+            64,
+            65,
+            66
+          ],
+          "contentGroups": {
+            "stem": [
+              62
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "使用螺钉旋具时要对准螺钉轴线，扭转的同时要施加一定的压力，以免旋具滑脱",
+                "contentIds": [
+                  63
+                ]
+              },
+              {
+                "label": "B",
+                "text": "使用力矩扳手时，禁止以推的方式进行扳转",
+                "contentIds": [
+                  64
+                ]
+              },
+              {
+                "label": "C",
+                "text": "棘轮手柄式套简扳手使用方便，适合拆装所有的螺栓或螺母",
+                "contentIds": [
+                  65
+                ]
+              },
+              {
+                "label": "D",
+                "text": "禁止用鲤鱼钳、尖嘴钳夹持高温机件",
+                "contentIds": [
+                  66
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 11,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "用数字万用表测量电路或电子元器件时，以下描述正确的是 ()",
+          "options": [
+            {
+              "label": "A",
+              "text": "测量电容时，电容必须放完电后再进行测量",
+              "contentIds": [
+                68
+              ]
+            },
+            {
+              "label": "B",
+              "text": "测量电流时，数字万用表表笔必须与被测电路并联连接再进行测量",
+              "contentIds": [
+                69
+              ]
+            },
+            {
+              "label": "C",
+              "text": "数字万用表允许在电路带电情况下测量电阻元件",
+              "contentIds": [
+                70
+              ]
+            },
+            {
+              "label": "D",
+              "text": "用数字万用表二极管挡，测量二极管读出电压降为0.3Ω时判断为导通，读数为超量程符号时为截止",
+              "contentIds": [
+                71
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            67,
+            68,
+            69,
+            70,
+            71
+          ],
+          "contentGroups": {
+            "stem": [
+              67
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "测量电容时，电容必须放完电后再进行测量",
+                "contentIds": [
+                  68
+                ]
+              },
+              {
+                "label": "B",
+                "text": "测量电流时，数字万用表表笔必须与被测电路并联连接再进行测量",
+                "contentIds": [
+                  69
+                ]
+              },
+              {
+                "label": "C",
+                "text": "数字万用表允许在电路带电情况下测量电阻元件",
+                "contentIds": [
+                  70
+                ]
+              },
+              {
+                "label": "D",
+                "text": "用数字万用表二极管挡，测量二极管读出电压降为0.3Ω时判断为导通，读数为超量程符号时为截止",
+                "contentIds": [
+                  71
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 12,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "关于汽车导线的描述，以下正确的是 ()",
+          "options": [
+            {
+              "label": "A",
+              "text": "低压导线截面积选择时，短时间工作的低压电气设备可选用实际载流量80％的导线，同时还应考虑电路中的电压降和导线发热等情况",
+              "contentIds": [
+                73
+              ]
+            },
+            {
+              "label": "B",
+              "text": "为保证一定的机械强度，一般低压导线截面积不小于 0.1mm2",
+              "contentIds": [
+                74
+              ]
+            },
+            {
+              "label": "C",
+              "text": "为保证起动机能正常工作，要求在线路上每100A的电压降不得超过1V",
+              "contentIds": [
+                75
+              ]
+            },
+            {
+              "label": "D",
+              "text": "汽车用点火线圈与火花塞的连接导线为低压导线",
+              "contentIds": [
+                76
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            72,
+            73,
+            74,
+            75,
+            76
+          ],
+          "contentGroups": {
+            "stem": [
+              72
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "低压导线截面积选择时，短时间工作的低压电气设备可选用实际载流量80％的导线，同时还应考虑电路中的电压降和导线发热等情况",
+                "contentIds": [
+                  73
+                ]
+              },
+              {
+                "label": "B",
+                "text": "为保证一定的机械强度，一般低压导线截面积不小于 0.1mm2",
+                "contentIds": [
+                  74
+                ]
+              },
+              {
+                "label": "C",
+                "text": "为保证起动机能正常工作，要求在线路上每100A的电压降不得超过1V",
+                "contentIds": [
+                  75
+                ]
+              },
+              {
+                "label": "D",
+                "text": "汽车用点火线圈与火花塞的连接导线为低压导线",
+                "contentIds": [
+                  76
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 13,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "图示电路中，开关S1 断开和闭合时，电路中A点的电位VA分别为 ()\n<img src=\"https://web-api.textin.com/ocr_image/external/bda3b99cef9eb4ac.jpg\" style=\"max-width:100%;max-height:200px\" />\n第13题图",
+          "options": [
+            {
+              "label": "A",
+              "text": "4.5 V,0V",
+              "contentIds": [
+                80
+              ]
+            },
+            {
+              "label": "B",
+              "text": "-4.5 V,0 V",
+              "contentIds": [
+                81
+              ]
+            },
+            {
+              "label": "C",
+              "text": "0V,-4.5 V",
+              "contentIds": [
+                82
+              ]
+            },
+            {
+              "label": "D",
+              "text": "0 V,4.5 V",
+              "contentIds": [
+                83
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            77,
+            78,
+            79,
+            80,
+            81,
+            82,
+            83
+          ],
+          "contentGroups": {
+            "stem": [
+              77,
+              78,
+              79
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "4.5 V,0V",
+                "contentIds": [
+                  80
+                ]
+              },
+              {
+                "label": "B",
+                "text": "-4.5 V,0 V",
+                "contentIds": [
+                  81
+                ]
+              },
+              {
+                "label": "C",
+                "text": "0V,-4.5 V",
+                "contentIds": [
+                  82
+                ]
+              },
+              {
+                "label": "D",
+                "text": "0 V,4.5 V",
+                "contentIds": [
+                  83
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 14,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "以下哪种类型直流电动机的励磁绕组和电枢绕组无连接关系？ ( )",
+          "options": [
+            {
+              "label": "A",
+              "text": "串励式",
+              "contentIds": [
+                85
+              ]
+            },
+            {
+              "label": "B",
+              "text": "并励式",
+              "contentIds": [
+                86
+              ]
+            },
+            {
+              "label": "C",
+              "text": "他励式",
+              "contentIds": [
+                87
+              ]
+            },
+            {
+              "label": "D",
+              "text": "复励式",
+              "contentIds": [
+                88
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            84,
+            85,
+            86,
+            87,
+            88
+          ],
+          "contentGroups": {
+            "stem": [
+              84
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "串励式",
+                "contentIds": [
+                  85
+                ]
+              },
+              {
+                "label": "B",
+                "text": "并励式",
+                "contentIds": [
+                  86
+                ]
+              },
+              {
+                "label": "C",
+                "text": "他励式",
+                "contentIds": [
+                  87
+                ]
+              },
+              {
+                "label": "D",
+                "text": "复励式",
+                "contentIds": [
+                  88
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 15,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "能够直接改变桑塔纳AJR发动机冷却循环路线的部件为 ()",
+          "options": [
+            {
+              "label": "A",
+              "text": "散热器",
+              "contentIds": [
+                90
+              ]
+            },
+            {
+              "label": "B",
+              "text": "补偿水箱",
+              "contentIds": [
+                91
+              ]
+            },
+            {
+              "label": "C",
+              "text": "节温器",
+              "contentIds": [
+                92
+              ]
+            },
+            {
+              "label": "D",
+              "text": "水温传感器",
+              "contentIds": [
+                93
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            89,
+            90,
+            91,
+            92,
+            93
+          ],
+          "contentGroups": {
+            "stem": [
+              89
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "散热器",
+                "contentIds": [
+                  90
+                ]
+              },
+              {
+                "label": "B",
+                "text": "补偿水箱",
+                "contentIds": [
+                  91
+                ]
+              },
+              {
+                "label": "C",
+                "text": "节温器",
+                "contentIds": [
+                  92
+                ]
+              },
+              {
+                "label": "D",
+                "text": "水温传感器",
+                "contentIds": [
+                  93
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 16,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "下列配气机构零部件中，采用压力润滑的是 ()",
+          "options": [
+            {
+              "label": "A",
+              "text": "摇臂衬套",
+              "contentIds": [
+                96
+              ]
+            },
+            {
+              "label": "B",
+              "text": "气门杆",
+              "contentIds": [
+                97
+              ]
+            },
+            {
+              "label": "C",
+              "text": "凸轮",
+              "contentIds": [
+                98
+              ]
+            },
+            {
+              "label": "D",
+              "text": "气门弹簧",
+              "contentIds": [
+                99
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            95,
+            96,
+            97,
+            98,
+            99
+          ],
+          "contentGroups": {
+            "stem": [
+              95
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "摇臂衬套",
+                "contentIds": [
+                  96
+                ]
+              },
+              {
+                "label": "B",
+                "text": "气门杆",
+                "contentIds": [
+                  97
+                ]
+              },
+              {
+                "label": "C",
+                "text": "凸轮",
+                "contentIds": [
+                  98
+                ]
+              },
+              {
+                "label": "D",
+                "text": "气门弹簧",
+                "contentIds": [
+                  99
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 17,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "关于发动机点火系统的描述，正确的是 ()",
+          "options": [
+            {
+              "label": "A",
+              "text": "火花塞击穿电压的大小与气缸温度有关，与混合气的浓度无关",
+              "contentIds": [
+                101
+              ]
+            },
+            {
+              "label": "B",
+              "text": "低速、低压缩比的小功率发动机中应当使用热型火花塞",
+              "contentIds": [
+                102
+              ]
+            },
+            {
+              "label": "C",
+              "text": "点火系统的每个点火线圈只能控制一个气缸的火花塞产生电火花",
+              "contentIds": [
+                103
+              ]
+            },
+            {
+              "label": "D",
+              "text": "发动机工作时，点火提前角是固定不变的",
+              "contentIds": [
+                104
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            100,
+            101,
+            102,
+            103,
+            104
+          ],
+          "contentGroups": {
+            "stem": [
+              100
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "火花塞击穿电压的大小与气缸温度有关，与混合气的浓度无关",
+                "contentIds": [
+                  101
+                ]
+              },
+              {
+                "label": "B",
+                "text": "低速、低压缩比的小功率发动机中应当使用热型火花塞",
+                "contentIds": [
+                  102
+                ]
+              },
+              {
+                "label": "C",
+                "text": "点火系统的每个点火线圈只能控制一个气缸的火花塞产生电火花",
+                "contentIds": [
+                  103
+                ]
+              },
+              {
+                "label": "D",
+                "text": "发动机工作时，点火提前角是固定不变的",
+                "contentIds": [
+                  104
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 18,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "下列选项中，不属于等速万向节的是 ( )",
+          "options": [
+            {
+              "label": "A",
+              "text": "球笼式万向节",
+              "contentIds": [
+                106
+              ]
+            },
+            {
+              "label": "B",
+              "text": "球叉式万向节",
+              "contentIds": [
+                107
+              ]
+            },
+            {
+              "label": "C",
+              "text": "三销轴式万向节",
+              "contentIds": [
+                108
+              ]
+            },
+            {
+              "label": "D",
+              "text": "自由三枢轴式万向节",
+              "contentIds": [
+                109
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            105,
+            106,
+            107,
+            108,
+            109
+          ],
+          "contentGroups": {
+            "stem": [
+              105
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "球笼式万向节",
+                "contentIds": [
+                  106
+                ]
+              },
+              {
+                "label": "B",
+                "text": "球叉式万向节",
+                "contentIds": [
+                  107
+                ]
+              },
+              {
+                "label": "C",
+                "text": "三销轴式万向节",
+                "contentIds": [
+                  108
+                ]
+              },
+              {
+                "label": "D",
+                "text": "自由三枢轴式万向节",
+                "contentIds": [
+                  109
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 19,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "浮钳盘式制动器轮缸活塞依靠以下哪个零部件的弹性变形回位 ( )",
+          "options": [
+            {
+              "label": "A",
+              "text": "矩形密封圈",
+              "contentIds": [
+                111
+              ]
+            },
+            {
+              "label": "B",
+              "text": "定位弹簧",
+              "contentIds": [
+                112
+              ]
+            },
+            {
+              "label": "C",
+              "text": "摩擦片",
+              "contentIds": [
+                113
+              ]
+            },
+            {
+              "label": "D",
+              "text": "导向销",
+              "contentIds": [
+                114
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            110,
+            111,
+            112,
+            113,
+            114
+          ],
+          "contentGroups": {
+            "stem": [
+              110
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "矩形密封圈",
+                "contentIds": [
+                  111
+                ]
+              },
+              {
+                "label": "B",
+                "text": "定位弹簧",
+                "contentIds": [
+                  112
+                ]
+              },
+              {
+                "label": "C",
+                "text": "摩擦片",
+                "contentIds": [
+                  113
+                ]
+              },
+              {
+                "label": "D",
+                "text": "导向销",
+                "contentIds": [
+                  114
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 20,
+          "type": "choice",
+          "typeDesc": "选择题",
+          "stem": "液压助力转向系统中，控制助力方向的部件是 ()",
+          "options": [
+            {
+              "label": "A",
+              "text": "转向油泵",
+              "contentIds": [
+                116
+              ]
+            },
+            {
+              "label": "B",
+              "text": "转向控制阀",
+              "contentIds": [
+                117
+              ]
+            },
+            {
+              "label": "C",
+              "text": "转向动力缸",
+              "contentIds": [
+                118
+              ]
+            },
+            {
+              "label": "D",
+              "text": "转向油壶",
+              "contentIds": [
+                119
+              ]
+            }
+          ],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            115,
+            116,
+            117,
+            118,
+            119
+          ],
+          "contentGroups": {
+            "stem": [
+              115
+            ],
+            "options": [
+              {
+                "label": "A",
+                "text": "转向油泵",
+                "contentIds": [
+                  116
+                ]
+              },
+              {
+                "label": "B",
+                "text": "转向控制阀",
+                "contentIds": [
+                  117
+                ]
+              },
+              {
+                "label": "C",
+                "text": "转向动力缸",
+                "contentIds": [
+                  118
+                ]
+              },
+              {
+                "label": "D",
+                "text": "转向油壶",
+                "contentIds": [
+                  119
+                ]
+              }
+            ],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        }
+      ],
+      "contentId": 8
+    },
+    {
+      "name": "二、是非选择题（本大题共20小题，每小题1分，共20分）",
+      "questionType": "section",
+      "questionTypeDesc": "是非选择题（本大题共20小题，每小题1分，共20分）",
+      "questions": [
+        {
+          "index": 21,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "标注线性尺寸时，当有几条相互平行的尺寸线时，要求小尺寸标注在外、大尺寸标注在内。\n()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            122,
+            123
+          ],
+          "contentGroups": {
+            "stem": [
+              122,
+              123
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 22,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "零件图既是制订装配工艺的规程，也是表达设计思想、指导生产和交流技术的重要技术文件。\n()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            124,
+            125
+          ],
+          "contentGroups": {
+            "stem": [
+              124,
+              125
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 23,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "平底从动件常用于高速场合，但不能用于有内凹的凸轮轮廓。 ()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            126
+          ],
+          "contentGroups": {
+            "stem": [
+              126
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 24,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "安全销通常依据额定载荷来设计，切断后应能快速飞出。 ()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            127
+          ],
+          "contentGroups": {
+            "stem": [
+              127
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 25,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "陶瓷材料具有耐高温、硬度高等特点，可用于制造火花塞、氧传感器等零部件。 ()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            128
+          ],
+          "contentGroups": {
+            "stem": [
+              128
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 26,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "绘制剖视图时，与剖切面接触的被切实体部分应画上剖面符号。 ( )",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            129
+          ],
+          "contentGroups": {
+            "stem": [
+              129
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 27,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "题图所示标志为右转车道指示标志。 ( )",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            130
+          ],
+          "contentGroups": {
+            "stem": [
+              130
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 28,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "汽车最大总质量是指汽车装备齐全满载时的质量。 ( )",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            131
+          ],
+          "contentGroups": {
+            "stem": [
+              131
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 29,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "划线时，划线平板可以用来放置工件和划线工具，不能作为划线时的基准平面。\n<img src=\"https://web-api.textin.com/ocr_image/external/389a8f1a6dccc8d9.jpg\" style=\"max-width:100%;max-height:200px\" />\n() 第27题图",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            132,
+            133,
+            134
+          ],
+          "contentGroups": {
+            "stem": [
+              132,
+              133,
+              134
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 30,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "安装台虎钳丝杠螺母时，不能一次性旋紧固定螺钉，要等丝杠旋入螺母后，才能再次旋紧固定螺钉。 ()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            135
+          ],
+          "contentGroups": {
+            "stem": [
+              135
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 31,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "我国工业和民用交流电的触电事故表明，频率为50Hz的交流电是最安全的。 ()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            136
+          ],
+          "contentGroups": {
+            "stem": [
+              136
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 32,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "在实际电路中常以机壳或大地为参考点，因此机壳和大地的电位一定相等。 ()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            137
+          ],
+          "contentGroups": {
+            "stem": [
+              137
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 33,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "手工焊接电子元器件，焊接面被加热到一定温度时，不可把焊锡丝直接送到烙铁头上。（）",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            138
+          ],
+          "contentGroups": {
+            "stem": [
+              138
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 34,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "在电源外部，电源力把电子从负极移动到正极所做的功W与被移动的电量Q的比值叫做电源的电动势。 ()35．气门导管对气门起导向作用外，还可以将气门杆的部分热量传给气缸盖。 ()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            139
+          ],
+          "contentGroups": {
+            "stem": [
+              139
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 36,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "V形六缸四冲程发动机的全支承曲轴主轴颈总数为4个。 ()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            141
+          ],
+          "contentGroups": {
+            "stem": [
+              141
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 37,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "在防冻剂中添加着色剂主要目的是为了便于查找冷却系统漏水点。 ()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            142
+          ],
+          "contentGroups": {
+            "stem": [
+              142
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 38,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "差速器左、右两半轴的转速之和是差速器壳体转速的两倍。 ()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            143
+          ],
+          "contentGroups": {
+            "stem": [
+              143
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 39,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "螺旋弹簧作为悬架系统的弹性元件，只能承受垂直载荷，且变形时不产生阻尼力，所以要加设导向机构和减振器。 ()",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            144
+          ],
+          "contentGroups": {
+            "stem": [
+              144
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 40,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "转向器的作用是减小转向盘传到转向节的力矩并改变力的传递方向。 ( )",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            145
+          ],
+          "contentGroups": {
+            "stem": [
+              145
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        }
+      ],
+      "contentId": 120
+    },
+    {
+      "name": "三、填空题（本大题共15小题，每小题2分，共30分）",
+      "questionType": "section",
+      "questionTypeDesc": "填空题（本大题共15小题，每小题2分，共30分）",
+      "questions": [
+        {
+          "index": 41,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "根据投射线与投影面所成的角度不同，平行投影法分为斜投影法和两种。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            147
+          ],
+          "contentGroups": {
+            "stem": [
+              147
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 42,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "某液压系统如题图所示，当手动换向阀处于时，活塞杆收缩复位。（填“最左位”或“中位”或“最右位”）\n<img src=\"https://web-api.textin.com/ocr_image/external/5399efa222789efa.jpg\" style=\"max-width:100%;max-height:200px\" />\n第42题图\n<img src=\"https://web-api.textin.com/ocr_image/external/99b2936b531f8b4d.jpg\" style=\"max-width:100%;max-height:200px\" />\n第45题图",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            148,
+            149,
+            150,
+            151,
+            152
+          ],
+          "contentGroups": {
+            "stem": [
+              148,
+              149,
+              150,
+              151,
+              152
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 43,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "选用汽油机润滑油时，应根据发动机的压缩比及附加装置确定其 等级。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            153
+          ],
+          "contentGroups": {
+            "stem": [
+              153
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 44,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "齿轮传动机构按传动轴的相对位置分类，单排行星齿轮机构中，行星齿轮与齿圈的传动属于传动。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            154
+          ],
+          "contentGroups": {
+            "stem": [
+              154
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 45,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "如题图，已知：Z1=38,Z2=56 Z3=28Z4=57，丝杆导程Ph=3mm。手轮回转1周，则砂轮架移动 mm。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            155
+          ],
+          "contentGroups": {
+            "stem": [
+              155
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 46,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "直列四缸发动机工作时，当第一缸处于压缩上止点前 30∘ ，那么曲轴再转过 。，第四缸。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            156
+          ],
+          "contentGroups": {
+            "stem": [
+              156
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 47,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "套螺纹的圆杆端部应，使板牙容易对准工件中心，也容易切入。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            157
+          ],
+          "contentGroups": {
+            "stem": [
+              157
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 48,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "新的或长期停用的电机，使用前应检查绕组间和绕组对地电阻。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            158
+          ],
+          "contentGroups": {
+            "stem": [
+              158
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 49,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "在纯净的硅或锗材料半导体（也称为半导体）中掺杂磷元素就成了N型半导体。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            159
+          ],
+          "contentGroups": {
+            "stem": [
+              159
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 50,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "漏电保护装置的作用主要是防止由漏电引起的触电事故和相触电事故。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            160
+          ],
+          "contentGroups": {
+            "stem": [
+              160
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 51,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "在配气相位中，排气门开启期间曲轴转过的角度称为。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            161
+          ],
+          "contentGroups": {
+            "stem": [
+              161
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 52,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "活塞在气缸内往复运动中，裙部起作用，并承受侧压力。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            162
+          ],
+          "contentGroups": {
+            "stem": [
+              162
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 53,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "按照连接形式不同，气缸压力表可以分为和螺纹接口式。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            163
+          ],
+          "contentGroups": {
+            "stem": [
+              163
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 54,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "某轿车轮胎规格为“205/60 R15 85H”，其中“205”代表轮胎名义为205mm。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            164
+          ],
+          "contentGroups": {
+            "stem": [
+              164
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 55,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "开手动挡的汽车，即使在颠簸路面行驶时也不会自行脱挡，是因为变速器内设置了装置。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            165
+          ],
+          "contentGroups": {
+            "stem": [
+              165
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        }
+      ],
+      "contentId": 146
+    },
+    {
+      "name": "四、作图与识图题（本大题共4小题，共20分）",
+      "questionType": "section",
+      "questionTypeDesc": "作图与识图题（本大题共4小题，共20分）",
+      "questions": [
+        {
+          "index": 56,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "已知零件的主视图、俯视图，请画出左视图。（共5分）\n<img src=\"https://web-api.textin.com/ocr_image/external/064af2ed46b3e8e1.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/ddc5a1f17838d8db.jpg\" style=\"max-width:100%;max-height:200px\" />\n第56题图",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            168,
+            169,
+            170,
+            171
+          ],
+          "contentGroups": {
+            "stem": [
+              168,
+              169,
+              170,
+              171
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 57,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "图示为汽车燃油供给系统的结构示意图，完成下列各题。（共5分，每空1分）\n<img src=\"https://web-api.textin.com/ocr_image/external/5c13a7066d22d5bc.jpg\" style=\"max-width:100%;max-height:200px\" />\n第57题图\n（1）图中序号“①”所指部件的名称为 ;\n（2）图中序号“②”所指部件内会设置 ，在其停止工作时密封油路，使燃油系统保持一定残压，以便发动机下次容易起动；\n（3）图中序号“④”所指部件的任务是保持燃油分配管内油压与进气歧管压力之间的压力差，从而使喷油量只取决于序号“③”所指部件的开启持续；\n（4）若图中序号“⑤”处破损，与大气相通，则流往回油管的燃油将变 。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            172,
+            173,
+            174,
+            175,
+            176,
+            177,
+            178
+          ],
+          "contentGroups": {
+            "stem": [
+              172,
+              173,
+              174,
+              175,
+              176,
+              177,
+              178
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 58,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "图示为4个总成部件结构示意图，完成下列各题。（共5分，每小题1分）\n\n<table border=\"1\" ><tr>\n<td>①<br>③<br>②<br><img src=\"https://web-api.textin.com/ocr_image/external/732552589f22133b.jpg\"></td>\n<td>④<br>⑤<br><img src=\"https://web-api.textin.com/ocr_image/external/066b132afd1069d5.jpg\"></td>\n</tr><tr>\n<td>⑦ ⑥<br><img src=\"https://web-api.textin.com/ocr_image/external/096635b64f296421.jpg\"></td>\n<td>⑨<br>⑩<br><img src=\"https://web-api.textin.com/ocr_image/external/8612a8d9b80e06f8.jpg\"></td>\n</tr></table>\n\n\n第58题图\n（1）为缩短换挡时间，与待啮合齿圆锥面接触，增加摩擦力矩的部件序号是 ;\n（2）液力变矩器中，与变速器输入轴相连的部件序号是；\n（3）制动过程中，通过液压力将摩擦片压紧在制动盘上的部件序号是 ;\n（4）通过发动机进气岐管的真空度与大气压力差，可以减轻驾驶员制动操纵力的部件序号是；\n（5）上述总成部件中，能够将机械能转化成液压能的部件序号是。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            180,
+            181,
+            182,
+            183,
+            184,
+            185,
+            186,
+            187
+          ],
+          "contentGroups": {
+            "stem": [
+              180,
+              181,
+              182,
+              183,
+              184,
+              185,
+              186,
+              187
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 59,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "图示为某用电器的NE555控制电路，完成下列各题。（共5分，每空0.5分）\n<img src=\"https://web-api.textin.com/ocr_image/external/3da28ab7934068a6.jpg\" style=\"max-width:100%;max-height:200px\" />\n第59题图\n（1）已知电子元器件相关名称“可变电阻”、“电阻”、“集成电路”、“三极管”、“二极管”、“光敏二极管”、“发光二极管”、“直流电动机”、“交流电动机”、“三相异步电动机”、“继电器”、“时间继电器”、“温度继电器”、“白炽灯”、“LED灯”、“电容”、“可变电容”、“电感”，根据题图电子元器件的图示符号，选填一个相符的名称到下方的空格中。\nBJ1 : ,BJ2: ; BJ33: ; BJ4 : ,BJ5 ;BJ6: ;\n（2）图中代号“BJ44”所指电子元器件具有隔通的作用；\n（3）题图中电子元器件“VT”的类型是型；闭合开关K1，电子元器件代号“BJ55”能正常工作，可以确定电子元器件代号“VT”处于（填“截止”或“饱和导通”）状态。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            188,
+            189,
+            190,
+            191,
+            192,
+            193,
+            194
+          ],
+          "contentGroups": {
+            "stem": [
+              188,
+              189,
+              190,
+              191,
+              192,
+              193,
+              194
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        }
+      ],
+      "contentId": 167
+    },
+    {
+      "name": "五、综合分析计算题（本大题共5小题，共40分）",
+      "questionType": "section",
+      "questionTypeDesc": "综合分析计算题（本大题共5小题，共40分）",
+      "questions": [
+        {
+          "index": 60,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "图示为汽车某总成结构示意图，完成下列各题。（共7分，每空1分）\n<img src=\"https://web-api.textin.com/ocr_image/external/7c56effd9395d196.jpg\" style=\"max-width:100%;max-height:200px\" />\n第60题图\n（1）按压紧弹簧的形式，该总成采用了 式压紧机构；\n（2）写出图中序号所指零部件的名称：\n①;②;⑦;\n（3）图中序号“⑥”所指部件磨损变薄时，相应的踏板自由行程会变;\n（4）传动系统工作时，序号“⑥”所指部件中的可以减轻因发动机工作不平稳而引起的扭转振动；\n（5）图中属于从动部分的部件有（填序号）。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            197,
+            198,
+            199,
+            200,
+            201,
+            202,
+            203,
+            204,
+            205
+          ],
+          "contentGroups": {
+            "stem": [
+              197,
+              198,
+              199,
+              200,
+              201,
+              202,
+              203,
+              204,
+              205
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 61,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "图示为开关和继电器控制电路图，已知：UE1=12V,RKV3=60Ω,REL1=RREL2=REL3=REL4= REL5=6Ω，完成下列各题。（计算结果四舍五入，保留2位小数）（共7分，每空1分）\n<img src=\"https://web-api.textin.com/ocr_image/external/6cfe7bdd0b2f6ddc.jpg\" style=\"max-width:100%;max-height:200px\" />\n第61题图\n（1）开关K1、K2均断开，测量电路中K2两端电阻R15-16为 Ω;\n（2）开关K1闭合、K2 断开，电路中“10”点的电位V10为 V，电路的总电流为A，若此时灯EL2发生灯丝熔断故障，则灯泡 EL4 （填“亮度不变”或“熄灭”或“变亮”或“变暗”）；\n（3）开关K1、K2闭合，灯泡 EL55（填“点亮”或“不亮”），电路的总电流为A，若此时灯 EL2 发生灯丝熔断故障，则灯泡 EL44 （填“亮度不变”或“熄灭”或“变亮”或“变暗”）。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            206,
+            207,
+            208,
+            209,
+            210,
+            211
+          ],
+          "contentGroups": {
+            "stem": [
+              206,
+              207,
+              208,
+              209,
+              210,
+              211
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 62,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "图示为汽车防抱死制动系统工作原理图，完成下列各题。（共7分，每空1分）\n<img src=\"https://web-api.textin.com/ocr_image/external/04a68380b1ed0669.jpg\" style=\"max-width:100%;max-height:200px\" />\n第62题图\n（1）当该系统的部件“①”发生故障时，以下哪个故障警示灯会点亮？\nA.\n<img src=\"https://web-api.textin.com/ocr_image/external/79cd811ec6d07535.jpg\" style=\"max-width:100%;max-height:200px\" />\nB.\n<img src=\"https://web-api.textin.com/ocr_image/external/431f3e78754035a9.jpg\" style=\"max-width:100%;max-height:200px\" />\nC.\n<img src=\"https://web-api.textin.com/ocr_image/external/4340ee7e9f153a7c.jpg\" style=\"max-width:100%;max-height:200px\" />\nD.\n<img src=\"https://web-api.textin.com/ocr_image/external/66939ba53b21d564.jpg\" style=\"max-width:100%;max-height:200px\" />\n（2）写出图中序号所指部件的名称：\n①;②;③ ;\n（3）该系统为汽车的式安全装置（填“主动”或“被动”）；工作过程中，若压力调节器1关闭，压力调节器2打开为过程（填“增压”或“保压”或“减压”）；\n（4）具备该系统的车辆，在紧急制动时，可以提高轮胎与地面的系数，以防止车轮抱死拖滑。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            213,
+            214,
+            215,
+            216,
+            217,
+            218,
+            219,
+            220,
+            221,
+            222,
+            223,
+            224,
+            225,
+            226,
+            227,
+            228
+          ],
+          "contentGroups": {
+            "stem": [
+              213,
+              214,
+              215,
+              216,
+              217,
+              218,
+              219,
+              220,
+              221,
+              222,
+              223,
+              224,
+              225,
+              226,
+              227,
+              228
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 63,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "图示为外径千分尺测量曲轴轴颈过程，完成下列各题。（共7分，每空1分）\n<img src=\"https://web-api.textin.com/ocr_image/external/037b58081a64ae02.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/589b867f83c5b409.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/1abb40c9ef739f5f.jpg\" style=\"max-width:100%;max-height:200px\" />\n第63题图（1）\n（1）曲轴主轴颈的预估：清洁曲轴主轴颈，使用游标卡尺直接测量曲轴第一道主轴颈，测得数据如第63题图（2）所示，预估该曲轴的主轴颈为 mm，应当选用规格为5075mm的外径千分尺；\n<img src=\"https://web-api.textin.com/ocr_image/external/b9a9d25d02657a24.jpg\" style=\"max-width:100%;max-height:200px\" />\n第63题图（2）\n（2）外径千分尺的预估精度为 mm，使用前要先检查是否校准，如第63题图（3）所示，估算该外径千分尺的误差为mm，以此误差为依据完成校准；\n<img src=\"https://web-api.textin.com/ocr_image/external/8de5382d99c12b3e.jpg\" style=\"max-width:100%;max-height:200px\" />\n第63题图（3）\n（3）在每一道曲轴主轴颈两侧，分别选取截面I-I和II-II，在每个截面上选取两个相互的方向，用外径千分尺进行测量；\n（4）测得曲轴第一道主轴颈的数据如第63题图（4）所示，计算截面I-I的圆度误差为mm；轴颈的阴柱度误差为 mm。\n<img src=\"https://web-api.textin.com/ocr_image/external/aa87ca5c41a9748b.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/968353092c80037c.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/9df6bb43ed2ce3ae.jpg\" style=\"max-width:100%;max-height:200px\" />\n<img src=\"https://web-api.textin.com/ocr_image/external/5ec0e7edfdb86dcb.jpg\" style=\"max-width:100%;max-height:200px\" />\nA-A\nB-B\nA-A\nB-B\n第63题图（4）",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            229,
+            230,
+            231,
+            232,
+            233,
+            234,
+            235,
+            236,
+            237,
+            239,
+            240,
+            241,
+            242,
+            243,
+            244,
+            245,
+            246,
+            247,
+            248,
+            249,
+            250,
+            251
+          ],
+          "contentGroups": {
+            "stem": [
+              229,
+              230,
+              231,
+              232,
+              233,
+              234,
+              235,
+              236,
+              237,
+              239,
+              240,
+              241,
+              242,
+              243,
+              244,
+              245,
+              246,
+              247,
+              248,
+              249,
+              250,
+              251
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        },
+        {
+          "index": 64,
+          "type": "unknown",
+          "typeDesc": "",
+          "stem": "识读零件图，完成下列各题。（共12分，每空1分）\n<img src=\"https://web-api.textin.com/ocr_image/external/f7483dd716fc54a2.jpg\" style=\"max-width:100%;max-height:200px\" />\n第64题图\n（1）该零件的名称为缸体，选用的材料是，按其形状特点属于类零件；\n（2）该零件图有个基本视图，主视图采用视图的表达方法；\n（3）缸体底板上2个圆锥销孔的定位尺寸为 mm和 mm;\n（4）宽度方向尺寸基准是缸体的；\n（5）缸体的表面粗糙度要求最高的部位是以及用于定位的锥孔面；\n（6）缸体直接铸造成型部分，未进行切削加工的表面粗糙度值Ra 为 μm；\n（7）孔ø33500+0.039”的轴线对基准要素缸体底面的公差为0.06mm，对基准要素的垂直度公差为0.025mm；\n（8）缸体加工完成后要进行7MPa的油压实验，内不得有泄漏。",
+          "options": [],
+          "answer": "",
+          "analysis": "",
+          "knowledge": "",
+          "difficulty": "",
+          "score": "",
+          "images": [],
+          "tables": [],
+          "subQuestions": [],
+          "element_list": [],
+          "contentIds": [
+            252,
+            253,
+            254,
+            255,
+            256,
+            258,
+            259,
+            260,
+            261,
+            262,
+            263
+          ],
+          "contentGroups": {
+            "stem": [
+              252,
+              253,
+              254,
+              255,
+              256,
+              258,
+              259,
+              260,
+              261,
+              262,
+              263
+            ],
+            "options": [],
+            "answer": [],
+            "analysis": [],
+            "knowledge": [],
+            "difficulty": [],
+            "score": []
+          }
+        }
+      ],
+      "contentId": 196
+    }
+  ],
+  "questionCount": 65
+}

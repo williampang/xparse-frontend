@@ -50,6 +50,7 @@ export const RobotRightView: FC<IProps> = ({
     <RightView
       onTabChange={onTabChange}
       result={resultJson}
+      fileType={current.fileType}
       wrapperClassName={classNames('rightViewWrapper', 'result-struct-right-wrapper', {
         [styles['new-right-view']]: type === 'new',
       })}

@@ -9,6 +9,7 @@ import styles from './index.less';
 interface IProps {
   result: any;
   data: IExamPaperData;
+  isPdf?: boolean;
 }
 
 /** 题目在原图中的区域（页面坐标系） */
@@ -245,6 +246,17 @@ const findGutters = (ranges: { x0: number; x1: number }[], pageWidth: number): [
 /** 栏间隙探测结果缓存，key: pageId_pageWidth */
 const pageGutterCache = new Map<string, [number, number][]>();
 
+/**
+ * 清空图片预览的全部模块级缓存。缓存 key 只含 pageId/bbox 不区分来源文件，
+ * 切换解析文件（如 docx → PDF）后若不清空，新文件中坐标恰好相同的区域
+ * 会命中上一份文档的裁剪图/页面原图，导致预览图与实际位置完全不符
+ */
+export const resetExamPaperImageCaches = () => {
+  cropCache.clear();
+  pageSourceCache.clear();
+  pageGutterCache.clear();
+};
+
 /** 探测指定页的栏间隙（基于整页所有块，比仅用题目自身块更稳健） */
 const detectPageGutters = (result: any, pageId: number, pageWidth: number): [number, number][] => {
   const cacheKey = `${pageId}_${pageWidth}`;
@@ -339,10 +351,16 @@ const blocksToRegions = (result: any, blocks: IBlock[]): IQuestionRegion[] => {
   byPage.forEach((pageBlocks, pageId) => {
     const pageIndex = pages.findIndex((p: any) => p?.page_id === pageId);
     const pageNumber = pageIndex >= 0 ? pageIndex + 1 : pageId + 1;
-    const pageWidth =
+    let pageWidth =
       typeof pages[pageIndex]?.width === 'number' && pages[pageIndex].width > 0
         ? pages[pageIndex].width
         : 1190;
+    // pages 尺寸单位可能与 position 不一致（如 PDF），块溢出时用块范围估算页宽，
+    // 保证聚类/栏探测中的比例阈值（0.03 页宽、0.7 页宽等）在正确尺度下计算
+    const blockExtent = getPageBlockExtent(result, pageId);
+    if (blockExtent.maxX > pageWidth * 1.02) {
+      pageWidth = Math.max(blockExtent.maxX * 1.05, 1);
+    }
 
     // 栏间隙中点：优先用整页块探测（双页合扫/左右分栏），探测不到时用文本簇推算兜底
     const gutters = detectPageGutters(result, pageId, pageWidth);
@@ -562,83 +580,113 @@ const getPageImageSource = (result: any, pageId: number): Promise<IPageSource | 
   return promise;
 };
 
-/** 裁剪结果缓存 */
-const cropCache = new Map<string, string>();
+/** 裁剪结果（含实际像素尺寸，用于限制图片最大显示尺寸） */
+interface ICropResult {
+  dataUrl: string;
+  width: number;
+  height: number;
+}
 
-/** 按区域从页面原图中裁剪出题目图片 */
-const cropRegion = async (result: any, region: IQuestionRegion): Promise<string> => {
-  const cacheKey = `${region.pageId}_${region.bbox.x}_${region.bbox.y}_${region.bbox.w}_${region.bbox.h}`;
+/** 裁剪结果缓存 */
+const cropCache = new Map<string, ICropResult>();
+
+/** 计算指定页所有块的位置外包范围（用于校验坐标空间） */
+const getPageBlockExtent = (result: any, pageId: number): { maxX: number; maxY: number } => {
+  let maxX = 0;
+  let maxY = 0;
+  const detail = result?.detail_new || result?.detail;
+  if (Array.isArray(detail)) {
+    for (const item of detail) {
+      if (Number(item.page_id) !== pageId) continue;
+      const pos = getBlockPosition(item);
+      if (!pos) continue;
+      for (let i = 0; i < pos.length; i += 2) {
+        maxX = Math.max(maxX, pos[i]);
+        maxY = Math.max(maxY, pos[i + 1]);
+      }
+    }
+  }
+  return { maxX, maxY };
+};
+
+/** 按区域从页面原图中裁剪出题目图片，同时返回裁剪图的实际像素尺寸 */
+const cropRegion = async (
+  result: any,
+  region: IQuestionRegion,
+  isPdf: boolean,
+): Promise<ICropResult> => {
+  const cacheKey = `${isPdf ? 'pdf' : 'image'}_${region.pageId}_${region.bbox.x}_${region.bbox.y}_${region.bbox.w}_${region.bbox.h}`;
   const cached = cropCache.get(cacheKey);
   if (cached) return cached;
 
   const source = await getPageImageSource(result, region.pageId);
   if (!source) throw new Error('page source not found');
 
-  // 页面坐标系宽度：优先 pages 数据，其次按 SVG viewBox 推算，最后用原图像素（scale=1）
-  let coordWidth = source.coordWidth;
-  let coordHeight = source.coordHeight;
-  if (!coordWidth) {
-    const svgDom = document.querySelector<SVGElement>(
-      `#imgContainer svg[data-page-number="${region.pageNumber}"]`,
-    );
-    const viewBox = svgDom?.getAttribute('viewBox')?.split(' ').map(Number);
-    if (viewBox && viewBox.length === 4 && viewBox[2] > 0) {
-      coordWidth = viewBox[2];
-      coordHeight = viewBox[3];
-    } else {
-      coordWidth = source.width;
-      coordHeight = source.height;
-    }
-  }
+  // position 与左侧 PDF 遮罩共用 pages.width/height 坐标系。PDF 下载图片的
+  // 像素尺寸可能不同于该页面坐标系，不能用原图宽高比反推，否则会把坐标缩小到约 80%。
+  const coordWidth = source.coordWidth || source.width;
+  const coordHeight = source.coordHeight || source.height;
 
-  const scale = source.width / coordWidth;
+  // PDF 的页面坐标尺寸和渲染图片像素尺寸可能宽高比不同，横纵轴必须分别换算。
+  const scaleX = source.width / coordWidth;
+  const scaleY = source.height / coordHeight;
   const pad = 6; // 页面坐标系下向外扩边，避免裁掉边缘内容
-  const x = Math.max(0, region.bbox.x - pad);
-  const y = Math.max(0, region.bbox.y - pad);
-  const w = Math.min(region.bbox.w + pad * 2, coordWidth - x);
-  const h = Math.min(region.bbox.h + pad * 2, (coordHeight || coordWidth) - y);
+  // PDF 的 position 坐标以 72 DPI 输出，而预览原图采用 96 DPI：96 / 72 = 4 / 3。
+  const positionScale = isPdf ? 4 / 3 : 1;
+  const x = Math.max(0, (region.bbox.x - pad) * positionScale);
+  const y = Math.max(0, (region.bbox.y - pad) * positionScale);
+  const w = Math.min((region.bbox.w + pad * 2) * positionScale, coordWidth - x);
+  const h = Math.min(
+    (region.bbox.h + pad * 2) * positionScale,
+    (coordHeight || coordWidth) - y,
+  );
   if (w <= 0 || h <= 0) throw new Error('invalid region');
 
   const canvas = document.createElement('canvas');
-  canvas.width = Math.round(w * scale);
-  canvas.height = Math.round(h * scale);
+  canvas.width = Math.round(w * scaleX);
+  canvas.height = Math.round(h * scaleY);
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('canvas context not found');
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(
     source.img,
-    x * scale,
-    y * scale,
-    w * scale,
-    h * scale,
+    x * scaleX,
+    y * scaleY,
+    w * scaleX,
+    h * scaleY,
     0,
     0,
     canvas.width,
     canvas.height,
   );
   const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-  cropCache.set(cacheKey, dataUrl);
-  return dataUrl;
+  const cropResult: ICropResult = { dataUrl, width: canvas.width, height: canvas.height };
+  cropCache.set(cacheKey, cropResult);
+  return cropResult;
 };
 
 /** 单个区域的裁剪图 */
-const CropRegionImage: React.FC<{ result: any; region: IQuestionRegion }> = ({ result, region }) => {
-  const regionKey = `${region.pageId}_${region.bbox.x}_${region.bbox.y}_${region.bbox.w}_${region.bbox.h}`;
-  const [src, setSrc] = useState<string>(() => cropCache.get(regionKey) || '');
+const CropRegionImage: React.FC<{ result: any; region: IQuestionRegion; isPdf: boolean }> = ({
+  result,
+  region,
+  isPdf,
+}) => {
+  const regionKey = `${isPdf ? 'pdf' : 'image'}_${region.pageId}_${region.bbox.x}_${region.bbox.y}_${region.bbox.w}_${region.bbox.h}`;
+  const [crop, setCrop] = useState<ICropResult | null>(() => cropCache.get(regionKey) || null);
   const [failed, setFailed] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
-    if (src) return;
+    if (crop) return;
     let mounted = true;
     let timer: ReturnType<typeof setTimeout> | null = null;
     let attempts = 0;
     setFailed(false);
     const tryCrop = () => {
-      cropRegion(result, region)
-        .then((dataUrl) => {
-          if (mounted) setSrc(dataUrl);
+      cropRegion(result, region, isPdf)
+        .then((cropResult) => {
+          if (mounted) setCrop(cropResult);
         })
         .catch(() => {
           if (!mounted) return;
@@ -656,10 +704,20 @@ const CropRegionImage: React.FC<{ result: any; region: IQuestionRegion }> = ({ r
       mounted = false;
       if (timer) clearTimeout(timer);
     };
-  }, [regionKey, result, retryKey]);
+  }, [regionKey, result, isPdf, retryKey]);
 
-  if (src) {
-    return <img className={styles.cropImg} src={src} alt={`第${region.pageNumber}页区域`} />;
+  if (crop) {
+    return (
+      <img
+        className={styles.cropImg}
+        src={crop.dataUrl}
+        alt={`第${region.pageNumber}页区域`}
+        data-width={`${crop.width}px`}
+        data-height={`${crop.height}px`}
+        // 限制最大显示尺寸不超过裁剪图实际像素，避免放大模糊
+        style={{ maxWidth: `${crop.width / 1.5}px`, maxHeight: `${crop.height / 1.5}px` }}
+      />
+    );
   }
   if (failed) {
     return (
@@ -683,9 +741,15 @@ const CropRegionImage: React.FC<{ result: any; region: IQuestionRegion }> = ({ r
 };
 
 /** 图片模式下的单个题目 */
-const ImageQuestionItem: React.FC<{ result: any; question: IExamPaperQuestion; showIndex?: boolean }> = ({
+const ImageQuestionItem: React.FC<{
+  result: any;
+  question: IExamPaperQuestion;
+  isPdf: boolean;
+  showIndex?: boolean;
+}> = ({
   result,
   question,
+  isPdf,
   showIndex = true,
 }) => {
   const regionGroups = useMemo(() => getQuestionRegionGroups(result, question), [result, question]);
@@ -726,6 +790,7 @@ const ImageQuestionItem: React.FC<{ result: any; question: IExamPaperQuestion; s
                   key={`${region.pageId}_${region.bbox.x}_${region.bbox.y}_${region.bbox.w}_${region.bbox.h}`}
                   result={result}
                   region={region}
+                  isPdf={isPdf}
                 />
                 <div className={styles.regionPosInfo}>
                   {group.label && <span className={styles.regionLabel}>{group.label} · </span>}
@@ -742,7 +807,7 @@ const ImageQuestionItem: React.FC<{ result: any; question: IExamPaperQuestion; s
         <div className={styles.subQuestions}>
           <div className={styles.subQuestionsTitle}>小题：</div>
           {question.subQuestions.map((sub, idx) => (
-            <ImageQuestionItem key={idx} result={result} question={sub} />
+            <ImageQuestionItem key={idx} result={result} question={sub} isPdf={isPdf} />
           ))}
         </div>
       )}
@@ -751,7 +816,7 @@ const ImageQuestionItem: React.FC<{ result: any; question: IExamPaperQuestion; s
 };
 
 /** 试卷图片预览视图：按题目展示其在原始文档中的图片与位置 */
-const ExamPaperImageView: React.FC<IProps> = ({ result, data }) => {
+const ExamPaperImageView: React.FC<IProps> = ({ result, data, isPdf = false }) => {
   if (!data?.sections?.length) {
     return <Empty description="暂无试卷数据" />;
   }
@@ -770,7 +835,7 @@ const ExamPaperImageView: React.FC<IProps> = ({ result, data }) => {
             </div>
             <div className={styles.sectionQuestions}>
               {section.questions.map((q, qIdx) => (
-                <ImageQuestionItem key={qIdx} result={result} question={q} />
+                <ImageQuestionItem key={qIdx} result={result} question={q} isPdf={isPdf} />
               ))}
             </div>
           </div>

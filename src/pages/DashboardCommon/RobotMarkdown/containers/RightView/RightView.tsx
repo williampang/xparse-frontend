@@ -68,6 +68,7 @@ interface IProps {
   resultTabName?: string;
   wrapperClassName?: string;
   result: any;
+  fileType?: string;
   Common: ConnectState['Common'];
   Robot: ConnectState['Robot'];
   children?: any;
@@ -96,6 +97,7 @@ const RightContainer: FC<IProps> = ({
   children,
   wrapperClassName,
   result,
+  fileType,
   Common,
   Robot,
 }) => {
@@ -265,7 +267,7 @@ const RightContainer: FC<IProps> = ({
           ref={resultScrollerRef}
           className={classNames(styles.contentWrapper, resultScrollerClass)}
         >
-          <ExamPaperView result={rawResultJson} />
+          <ExamPaperView result={rawResultJson} isPdf={fileType === 'PDF'} />
         </div>
       );
     }
