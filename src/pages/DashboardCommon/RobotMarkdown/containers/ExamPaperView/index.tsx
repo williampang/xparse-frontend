@@ -51,13 +51,14 @@ const EditableQuestionItem: React.FC<{
   questionIdx: number;
   isEditing: boolean;
   onSelect: (key: string) => void;
+  onSaveQuestion: (key: string) => void;
   onChange: (sectionIdx: number, questionIdx: number, field: string, value: any) => void;
   onSplit: (sectionIdx: number, questionIdx: number) => void;
   onInsertImage: (sectionIdx: number, questionIdx: number, imgSrc: string) => void;
   onAddOption: (sectionIdx: number, questionIdx: number) => void;
   onRemoveOption: (sectionIdx: number, questionIdx: number, optionIdx: number) => void;
   editorRegistry: EditorRegistry;
-}> = ({ question, showIndex = true, sectionIdx, questionIdx, isEditing, onSelect, onChange, onSplit, onInsertImage, onAddOption, onRemoveOption, editorRegistry }) => {
+}> = ({ question, showIndex = true, sectionIdx, questionIdx, isEditing, onSelect, onSaveQuestion, onChange, onSplit, onInsertImage, onAddOption, onRemoveOption, editorRegistry }) => {
 
   const editorKey = `${sectionIdx}-${questionIdx}`;
   const questionContentId = question.contentIds.length > 0 ? question.contentIds[0] : undefined;
@@ -77,12 +78,19 @@ const EditableQuestionItem: React.FC<{
     onInsertImage(sectionIdx, questionIdx, contentId);
   }, [sectionIdx, questionIdx, onInsertImage]);
 
-  // 点击题目区域：进入编辑态
+  // 点击题目区域：仅在非编辑态时进入编辑态；若已经在编辑态则不响应（防止点击内部或空白退出）
   const handleClick = useCallback((e: React.MouseEvent) => {
-    // 如果点击的是 CKEditor 内部，不触发切换
-    if ((e.target as HTMLElement).closest('.ck-editor__editable')) return;
+    if (isEditing) return;
     onSelect(editorKey);
-  }, [editorKey, onSelect]);
+  }, [isEditing, editorKey, onSelect]);
+
+  const handleSaveClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onSaveQuestion(editorKey);
+    },
+    [editorKey, onSaveQuestion],
+  );
 
   return (
     <div
@@ -108,6 +116,14 @@ const EditableQuestionItem: React.FC<{
                 插入图片
               </Button>
             </Tooltip>
+            <Button
+              size="small"
+              type="primary"
+              className={styles.saveQuestionBtn}
+              onClick={handleSaveClick}
+            >
+              保存
+            </Button>
           </div>
 
           {/* 题干富文本编辑 */}
@@ -259,6 +275,7 @@ const EditableQuestionItem: React.FC<{
               questionIdx={questionIdx}
               isEditing={false}
               onSelect={onSelect}
+              onSaveQuestion={onSaveQuestion}
               onChange={onChange}
               onSplit={onSplit}
               onInsertImage={onInsertImage}
@@ -357,13 +374,14 @@ const SectionItem: React.FC<{
   sectionIdx: number;
   editingQuestionKey: string | null;
   onSelectQuestion: (key: string) => void;
+  onSaveQuestion: (key: string) => void;
   onChange?: (sectionIdx: number, questionIdx: number, field: string, value: any) => void;
   onSplit?: (sectionIdx: number, questionIdx: number) => void;
   onInsertImage?: (sectionIdx: number, questionIdx: number, imgContentId: string) => void;
   onAddOption?: (sectionIdx: number, questionIdx: number) => void;
   onRemoveOption?: (sectionIdx: number, questionIdx: number, optionIdx: number) => void;
   editorRegistry?: EditorRegistry;
-}> = ({ section, editMode, sectionIdx, editingQuestionKey, onSelectQuestion, onChange, onSplit, onInsertImage, onAddOption, onRemoveOption, editorRegistry }) => {
+}> = ({ section, editMode, sectionIdx, editingQuestionKey, onSelectQuestion, onSaveQuestion, onChange, onSplit, onInsertImage, onAddOption, onRemoveOption, editorRegistry }) => {
   return (
     <div className={styles.sectionItem}>
       <div className={styles.sectionHeader} data-content-id={section.contentId}>
@@ -381,6 +399,7 @@ const SectionItem: React.FC<{
               questionIdx={idx}
               isEditing={editingQuestionKey === qKey}
               onSelect={onSelectQuestion}
+              onSaveQuestion={onSaveQuestion}
               onChange={onChange!}
               onSplit={onSplit!}
               onInsertImage={onInsertImage!}
@@ -487,10 +506,80 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
     // examData 变化时不重置，避免保存后丢失编辑状态
   }, [examPaperMode]);
 
-  // 选择题目进入编辑态
-  const handleSelectQuestion = useCallback((key: string) => {
-    setEditingQuestionKey((prev) => (prev === key ? null : key));
-  }, []);
+  // 保存编辑：将 editedData 同步回 resultJson
+  const handleSave = useCallback(() => {
+    if (!editedData || !result) return;
+
+    setResultJson((prev: any) => {
+      if (!prev) return prev;
+      const newResult = JSON.parse(JSON.stringify(prev));
+
+      // 收集所有编辑后的题目（扁平化）
+      const allEditedQuestions: any[] = [];
+      for (const section of editedData.sections) {
+        for (const question of section.questions) {
+          const editedQ: any = {
+            index: question.index,
+            type: question.type || '',
+            typeDesc: question.typeDesc || '',
+            stem: question.stem || '',
+            answer: question.answer || '',
+            analysis: question.analysis || '',
+            knowledge: question.knowledge || '',
+            difficulty: question.difficulty || '',
+            score: question.score || '',
+            options: question.options.map((opt) => ({ label: opt.label, text: opt.text })),
+            element_list: [], // 清空 element_list，确保 parseQuestion 从直接字段读取编辑后的内容
+            contentIds: question.contentIds || [],
+            contentGroups: question.contentGroups,
+          };
+          // 同时写入 snake_case 字段，确保 parseQuestion 能读取
+          editedQ.sub_questions = (question.subQuestions || []).map((sub) => ({
+            index: sub.index,
+            stem: sub.stem || '',
+            answer: sub.answer || '',
+            analysis: sub.analysis || '',
+            options: (sub.options || []).map((opt) => ({ label: opt.label, text: opt.text })),
+            element_list: [],
+          }));
+          editedQ.image_list = question.images || [];
+          editedQ.table_list = question.tables || [];
+          allEditedQuestions.push(editedQ);
+        }
+      }
+
+      // 始终将编辑后的 questions 写入 resultJson
+      // 这样 formatExamPaper 下次渲染时会优先从 questions 读取，确保编辑结果生效；
+      // _edited 标记区分用户编辑保存与后端原始 questions，避免 detail 优先策略覆盖编辑结果
+      newResult.questions = allEditedQuestions;
+      newResult._edited = true;
+
+      return newResult;
+    });
+  }, [editedData, result, setResultJson]);
+
+  // 单道题目点击“保存”：退出编辑态并保存
+  const handleSaveQuestion = useCallback(
+    (key: string) => {
+      handleSave();
+      setEditingQuestionKey(null);
+      message.success('已保存');
+    },
+    [handleSave],
+  );
+
+  // 切换选中其他题目：自动保存当前内容并切换编辑目标
+  const handleSelectQuestion = useCallback(
+    (key: string) => {
+      setEditingQuestionKey((prev) => {
+        if (prev && prev !== key) {
+          handleSave();
+        }
+        return key;
+      });
+    },
+    [handleSave],
+  );
 
   const displayData = examPaperMode === 'edit' ? editedData : examData;
 
@@ -535,7 +624,6 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
 
         // 查找题干中是否有题号模式（如 "2." "3、" 等），从第二个开始拆分
         const lines = plainText.split('\n');
-        let splitLineIndex = -1;
         let splitCharIndex = -1;
         let charOffset = 0;
         for (let i = 0; i < lines.length; i++) {
@@ -543,7 +631,6 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
           if (i >= 1) {
             const match = lines[i].match(QUESTION_INDEX_REGEX);
             if (match) {
-              splitLineIndex = i;
               splitCharIndex = charOffset;
               break;
             }
@@ -658,58 +745,6 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
     [result, editorRegistry],
   );
 
-  // 保存编辑：将 editedData 中当前编辑的题目同步回 resultJson
-  const handleSave = useCallback(() => {
-    if (!editedData || !result) return;
-
-    setResultJson((prev: any) => {
-      if (!prev) return prev;
-      const newResult = JSON.parse(JSON.stringify(prev));
-
-      // 收集所有编辑后的题目（扁平化）
-      const allEditedQuestions: any[] = [];
-      for (const section of editedData.sections) {
-        for (const question of section.questions) {
-          const editedQ: any = {
-            index: question.index,
-            type: question.type || '',
-            typeDesc: question.typeDesc || '',
-            stem: question.stem || '',
-            answer: question.answer || '',
-            analysis: question.analysis || '',
-            knowledge: question.knowledge || '',
-            difficulty: question.difficulty || '',
-            score: question.score || '',
-            options: question.options.map((opt) => ({ label: opt.label, text: opt.text })),
-            element_list: [], // 清空 element_list，确保 parseQuestion 从直接字段读取编辑后的内容
-            contentIds: question.contentIds || [],
-            contentGroups: question.contentGroups,
-          };
-          // 同时写入 snake_case 字段，确保 parseQuestion 能读取
-          editedQ.sub_questions = (question.subQuestions || []).map((sub) => ({
-            index: sub.index,
-            stem: sub.stem || '',
-            answer: sub.answer || '',
-            analysis: sub.analysis || '',
-            options: (sub.options || []).map((opt) => ({ label: opt.label, text: opt.text })),
-            element_list: [],
-          }));
-          editedQ.image_list = question.images || [];
-          editedQ.table_list = question.tables || [];
-          allEditedQuestions.push(editedQ);
-        }
-      }
-
-      // 始终将编辑后的 questions 写入 resultJson
-      // 这样 formatExamPaper 下次渲染时会优先从 questions 读取，确保编辑结果生效；
-      // _edited 标记区分用户编辑保存与后端原始 questions，避免 detail 优先策略覆盖编辑结果
-      newResult.questions = allEditedQuestions;
-      newResult._edited = true;
-
-      return newResult;
-    });
-  }, [editedData, result, setResultJson]);
-
   // 监听 Ctrl+S 保存
   useEffect(() => {
     if (examPaperMode !== 'edit') return;
@@ -810,6 +845,7 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
               sectionIdx={idx}
               editingQuestionKey={editingQuestionKey}
               onSelectQuestion={handleSelectQuestion}
+              onSaveQuestion={handleSaveQuestion}
               onChange={handleFieldChange}
               onSplit={handleSplitQuestion}
               onInsertImage={handleInsertImage}
