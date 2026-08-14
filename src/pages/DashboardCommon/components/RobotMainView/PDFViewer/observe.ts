@@ -41,41 +41,74 @@ let moveBind: (e: any) => void;
 let pagechangingBind: (e: any) => void;
 
 const getPoint = ({ e, viewerRef, svgDom }: { e: any; viewerRef: any; svgDom: SVGSVGElement }) => {
-  let clickPoint = { x: e.layerX, y: e.layerY };
-  let wrapperDom: HTMLElement = e.target;
+  const svgPoint = svgDom.createSVGPoint();
+
+  // 优先使用标准 SVG 矩阵逆变换（自动适配 viewBox、CSS transform 旋转与平移、DPI 与缩放）
+  if (svgDom.getScreenCTM && Number.isFinite(e.clientX) && Number.isFinite(e.clientY)) {
+    try {
+      const ctm = svgDom.getScreenCTM();
+      if (ctm) {
+        const inverse = ctm.inverse();
+        if (inverse) {
+          svgPoint.x = e.clientX;
+          svgPoint.y = e.clientY;
+          const transformed = svgPoint.matrixTransform(inverse);
+          if (Number.isFinite(transformed.x) && Number.isFinite(transformed.y)) {
+            return transformed;
+          }
+        }
+      }
+    } catch (err) {
+      // 逆矩阵计算失败时降级走手动换算
+    }
+  }
+
+  // 降级手动换算
+  let clickX = Number.isFinite(e.layerX) ? e.layerX : Number.isFinite(e.offsetX) ? e.offsetX : 0;
+  let clickY = Number.isFinite(e.layerY) ? e.layerY : Number.isFinite(e.offsetY) ? e.offsetY : 0;
+  let wrapperDom: HTMLElement | null = e.target;
   let count = 0;
-  if (!(wrapperDom.nodeName === 'polygon' && wrapperDom.dataset.contentId)) {
-    while (!wrapperDom.classList.contains('textLayer')) {
-      clickPoint.x += wrapperDom.offsetLeft;
-      clickPoint.y += wrapperDom.offsetTop;
-      wrapperDom = wrapperDom.parentElement as HTMLElement;
+  if (wrapperDom && !(wrapperDom.nodeName === 'polygon' && (wrapperDom as HTMLElement).dataset?.contentId)) {
+    while (wrapperDom && !wrapperDom.classList?.contains('textLayer')) {
+      if (typeof wrapperDom.offsetLeft === 'number') {
+        clickX += wrapperDom.offsetLeft;
+      }
+      if (typeof wrapperDom.offsetTop === 'number') {
+        clickY += wrapperDom.offsetTop;
+      }
+      wrapperDom = wrapperDom.parentElement as HTMLElement | null;
       count += 1;
       if (count >= 5 || !wrapperDom) {
         break;
       }
     }
   }
-  const scale = viewerRef.currentScale;
+  const scale = Number(viewerRef?.currentScale) || 1;
   const dpiScale = Number(svgDom.dataset.dpiScale) || 1;
-  clickPoint.x = clickPoint.x / scale / dpiScale;
-  clickPoint.y = clickPoint.y / scale / dpiScale;
+  let x = clickX / scale / dpiScale;
+  let y = clickY / scale / dpiScale;
   // 有旋转时
   const pageAngle = svgDom.dataset.angle ? Number(svgDom.dataset.angle) : 0;
-  const rotate = viewerRef.pagesRotation + pageAngle;
+  const rotate = ((viewerRef?.pagesRotation || 0) + pageAngle) % 360;
   const viewBox: string = svgDom.getAttribute('viewBox') || '';
   const [_, __, width, height] = viewBox.split(' ').map((i) => Number(i));
   if (width && height) {
     if (rotate === 90) {
-      clickPoint = { x: clickPoint.y, y: height - clickPoint.x };
+      const tempX = x;
+      x = y;
+      y = height - tempX;
     } else if (rotate === 180) {
-      clickPoint = { x: width - clickPoint.x, y: height - clickPoint.y };
+      x = width - x;
+      y = height - y;
     } else if (rotate === 270) {
-      clickPoint = { x: width - clickPoint.y, y: clickPoint.x };
+      const tempX = x;
+      x = width - y;
+      y = tempX;
     }
   }
-  const svgPoint = svgDom.createSVGPoint();
-  svgPoint.x = clickPoint.x;
-  svgPoint.y = clickPoint.y;
+
+  svgPoint.x = Number.isFinite(x) ? x : 0;
+  svgPoint.y = Number.isFinite(y) ? y : 0;
 
   return svgPoint;
 };
