@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * 左侧预览区单个识别框的拖拽移动 / 手柄缩放调整钩子。
+ * 左侧预览区识别框（单框或组合 Group）的拖拽移动 / 手柄缩放调整钩子。
  *
  * 左侧视图（SVGRect / PDFRenderViewer / pdf.js）统一以 `polygon[data-content-id]`
  * 渲染识别框，选中态为 `.active`。本钩子与具体渲染路径无关：
  * - 通过 MutationObserver 监听 `#imgContainer` 内 polygon 选中态（class）变化；
- * - 当恰好只有一个 active polygon 时挂载 8 个缩放手柄，支持整体拖拽移动；
+ * - 当有 1 个或多个 active polygon（组合 Group）时挂载 8 个缩放手柄与组合外框，支持整体拖拽移动与比例缩放；
  * - 拖拽结束（mouseup）后将新的 8 点坐标换算回页面坐标系，通过 onCommit 回写。
  */
 
@@ -15,8 +15,11 @@ interface IUseRectAdjustOptions {
   enabled: boolean;
   /** detail_new || detail，用于读取块的原始 position（页面坐标系） */
   detail?: any[];
-  /** 拖拽结束后的回写回调 */
-  onCommit: (contentId: number | string, position: number[]) => void;
+  /** 拖拽结束后的回写回调（支持单个或批量更新） */
+  onCommit: (
+    contentIdOrUpdates: number | string | { contentId: number | string; position: number[] }[],
+    position?: number[],
+  ) => void;
 }
 
 interface IBBox {
@@ -24,6 +27,15 @@ interface IBBox {
   y: number;
   w: number;
   h: number;
+}
+
+interface IAdjustTargetItem {
+  polygon: SVGPolygonElement;
+  contentId: string | number;
+  origBBox: IBBox;
+  startBBox: IBBox;
+  prevPointerEvents: string;
+  prevCursor: string;
 }
 
 type AdjustMode = 'move' | 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
@@ -161,10 +173,9 @@ const useRectAdjust = ({ enabled, detail, onCommit }: IUseRectAdjustOptions) => 
     let selfMutating = false;
     let selfMutateTimer: ReturnType<typeof setTimeout> | null = null;
 
-    /** 已挂载手柄的 polygon 及清理函数 */
-    let attachedPolygon: SVGPolygonElement | null = null;
+    /** 清理函数 */
     let detach: (() => void) | null = null;
-    /** 最后一个被点击的识别框 content_id，多个选中框时仅它可调整 */
+    /** 最后一个被点击的识别框 content_id */
     let lastClickedId: string | null = null;
     /** 左侧预览容器 */
     let containerEl: HTMLElement | null = null;
@@ -210,33 +221,77 @@ const useRectAdjust = ({ enabled, detail, onCommit }: IUseRectAdjustOptions) => 
       }
     };
 
-    /** 为单个 active polygon 挂载手柄与拖拽逻辑 */
-    const attach = (polygon: SVGPolygonElement) => {
-      const contentId = polygon.getAttribute('data-content-id');
-      if (!contentId) return;
-      const idx = Number(contentId);
-      const item = Array.isArray(detailRef.current) ? detailRef.current[idx] : undefined;
-      const position: number[] | undefined = item?.position || item?.pos_list?.[0];
-      if (!Array.isArray(position) || position.length < 8) return;
-
-      const svg = polygon.closest('svg') as SVGSVGElement | null;
-      const parent = polygon.parentNode;
+    /** 为 active polygon 组合（单个或多个）挂载手柄与拖拽逻辑 */
+    const attach = (polygons: SVGPolygonElement[]) => {
+      if (!polygons.length) return;
+      const svg = polygons[0].closest('svg') as SVGSVGElement | null;
+      const parent = polygons[0].parentNode;
       if (!svg || !parent) return;
 
-      const origBBox = positionToBBox(position);
-      const startPts = parsePolygonPoints(polygon);
-      if (!startPts) return;
-      const startBBox = pointsToBBox(startPts);
-      if (startBBox.w <= 0 || startBBox.h <= 0) return;
+      const items: IAdjustTargetItem[] = [];
+      for (const polygon of polygons) {
+        const contentId = polygon.getAttribute('data-content-id');
+        if (!contentId) continue;
+        const idx = Number(contentId);
+        const item = Array.isArray(detailRef.current) ? detailRef.current[idx] : undefined;
+        const position: number[] | undefined = item?.position || item?.pos_list?.[0];
+        const startPts = parsePolygonPoints(polygon);
+        if (!startPts) continue;
+        const startBBox = pointsToBBox(startPts);
+        if (startBBox.w <= 0 || startBBox.h <= 0) continue;
+
+        const origBBox =
+          Array.isArray(position) && position.length >= 8
+            ? positionToBBox(position)
+            : { ...startBBox };
+
+        items.push({
+          polygon,
+          contentId,
+          origBBox,
+          startBBox,
+          prevPointerEvents: polygon.style.pointerEvents,
+          prevCursor: polygon.style.cursor,
+        });
+      }
+
+      if (!items.length) return;
+
+      const minX = Math.min(...items.map((it) => it.startBBox.x));
+      const minY = Math.min(...items.map((it) => it.startBBox.y));
+      const maxX = Math.max(...items.map((it) => it.startBBox.x + it.startBBox.w));
+      const maxY = Math.max(...items.map((it) => it.startBBox.y + it.startBBox.h));
+      const groupStartBBox: IBBox = {
+        x: minX,
+        y: minY,
+        w: maxX - minX,
+        h: maxY - minY,
+      };
+
+      if (groupStartBBox.w <= 0 || groupStartBBox.h <= 0) return;
 
       const scale = getUserScale(svg);
       const handleSize = HANDLE_SCREEN_SIZE / scale;
       const minSize = 4 / scale;
       const viewBounds = getViewBounds(svg);
 
-      // 创建手柄分组
+      // 创建手柄与外框分组
       const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       group.setAttribute('class', HANDLES_CLASS);
+
+      // 组合外框（虚线边框，可响应整体拖拽）
+      let outlineRect: SVGRectElement | null = null;
+      if (items.length > 1) {
+        outlineRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        outlineRect.setAttribute('fill', 'rgba(26, 102, 255, 0.04)');
+        outlineRect.setAttribute('stroke', '#1a66ff');
+        outlineRect.setAttribute('stroke-width', '1');
+        outlineRect.setAttribute('stroke-dasharray', '4,4');
+        outlineRect.setAttribute('vector-effect', 'non-scaling-stroke');
+        outlineRect.style.cursor = 'move';
+        group.appendChild(outlineRect);
+      }
+
       const handleEls: { el: SVGRectElement; mode: AdjustMode }[] = [];
       for (const def of HANDLE_DEFS) {
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -251,9 +306,28 @@ const useRectAdjust = ({ enabled, detail, onCommit }: IUseRectAdjustOptions) => 
         handleEls.push({ el: rect, mode: def.mode });
       }
 
-      /** 同步 polygon points 与手柄位置 */
+      /** 同步 group 中所有 polygon points 与手柄位置 */
       const paint = (box: IBBox) => {
-        polygon.setAttribute('points', bboxToPoints(box));
+        const scaleX = groupStartBBox.w > 0 ? box.w / groupStartBBox.w : 1;
+        const scaleY = groupStartBBox.h > 0 ? box.h / groupStartBBox.h : 1;
+
+        for (const it of items) {
+          const polyBox: IBBox = {
+            x: box.x + (it.startBBox.x - groupStartBBox.x) * scaleX,
+            y: box.y + (it.startBBox.y - groupStartBBox.y) * scaleY,
+            w: it.startBBox.w * scaleX,
+            h: it.startBBox.h * scaleY,
+          };
+          it.polygon.setAttribute('points', bboxToPoints(polyBox));
+        }
+
+        if (outlineRect) {
+          outlineRect.setAttribute('x', String(box.x));
+          outlineRect.setAttribute('y', String(box.y));
+          outlineRect.setAttribute('width', String(box.w));
+          outlineRect.setAttribute('height', String(box.h));
+        }
+
         for (const h of handleEls) {
           const c = handleCenter(h.mode, box);
           h.el.setAttribute('x', String(c.x - handleSize / 2));
@@ -261,42 +335,48 @@ const useRectAdjust = ({ enabled, detail, onCommit }: IUseRectAdjustOptions) => 
         }
       };
 
-      let currentBBox = { ...startBBox };
+      let currentBBox = { ...groupStartBBox };
       paint(currentBBox);
-      // 把 active polygon 与其手柄分组移到父容器末尾置顶：SVG 按文档顺序绘制，
-      // 后面的兄弟元素会覆盖前面的，不置顶则重叠的图块会盖住拖拽手柄导致无法操作；
-      // 记录原始位置，卸载时恢复原位，不改变文档原有渲染顺序
+
+      // 把 active polygons 与手柄分组置顶显示
+      const savedEntries = items.map((it) => ({
+        polygon: it.polygon,
+        prevSibling: it.polygon.previousElementSibling,
+        parent: it.polygon.parentNode,
+      }));
+
       const restoreTopMost = (() => {
-        const prevSibling = polygon.previousElementSibling;
         guardSelfMutation(() => {
-          parent.appendChild(polygon);
+          for (const it of items) {
+            parent.appendChild(it.polygon);
+          }
           parent.appendChild(group);
         });
         return () => {
           guardSelfMutation(() => {
-            if (!polygon.parentNode) return;
-            // 原始兄弟节点可能已被重渲染移除，此时兜底插到父容器头部（保持手柄紧随 polygon）
-            const refNode =
-              prevSibling && prevSibling.parentNode === parent
-                ? prevSibling.nextSibling
-                : parent.firstChild;
-            if (refNode && refNode.parentNode !== parent) return;
-            parent.insertBefore(polygon, refNode);
-            parent.insertBefore(group, polygon.nextSibling);
+            for (const entry of savedEntries) {
+              if (!entry.polygon.parentNode || !entry.parent) continue;
+              const refNode =
+                entry.prevSibling && entry.prevSibling.parentNode === entry.parent
+                  ? entry.prevSibling.nextSibling
+                  : entry.parent.firstChild;
+              if (refNode && refNode.parentNode !== entry.parent) continue;
+              entry.parent.insertBefore(entry.polygon, refNode);
+            }
           });
         };
       })();
 
-      // 拖拽期间让 polygon 任意位置可命中（含透明填充区域）
-      const prevPointerEvents = polygon.style.pointerEvents;
-      const prevCursor = polygon.style.cursor;
-      polygon.style.pointerEvents = 'all';
-      polygon.style.cursor = 'move';
+      // 拖拽期间让 polygon 可命中
+      for (const it of items) {
+        it.polygon.style.pointerEvents = 'all';
+        it.polygon.style.cursor = 'move';
+      }
 
       let dragging = false;
       let moved = false;
       let startPt: { x: number; y: number } | null = null;
-      let dragBBox: IBBox = { ...startBBox };
+      let dragBBox: IBBox = { ...groupStartBBox };
       let dragMode: AdjustMode = 'move';
 
       const onWindowMove = (e: MouseEvent) => {
@@ -339,10 +419,10 @@ const useRectAdjust = ({ enabled, detail, onCommit }: IUseRectAdjustOptions) => 
 
         if (!moved) {
           moved =
-            Math.abs(box.x - startBBox.x) > 0.5 ||
-            Math.abs(box.y - startBBox.y) > 0.5 ||
-            Math.abs(box.w - startBBox.w) > 0.5 ||
-            Math.abs(box.h - startBBox.h) > 0.5;
+            Math.abs(box.x - groupStartBBox.x) > 0.5 ||
+            Math.abs(box.y - groupStartBBox.y) > 0.5 ||
+            Math.abs(box.w - groupStartBBox.w) > 0.5 ||
+            Math.abs(box.h - groupStartBBox.h) > 0.5;
         }
         currentBBox = box;
         guardSelfMutation(() => paint(box));
@@ -355,7 +435,6 @@ const useRectAdjust = ({ enabled, detail, onCommit }: IUseRectAdjustOptions) => 
           window.removeEventListener('click', intercept, { capture: true } as any);
         };
         window.addEventListener('click', intercept, { capture: true, once: true });
-        // 兜底：click 未触发时避免残留拦截
         setTimeout(() => {
           window.removeEventListener('click', intercept, { capture: true } as any);
         }, 0);
@@ -368,18 +447,31 @@ const useRectAdjust = ({ enabled, detail, onCommit }: IUseRectAdjustOptions) => 
         window.removeEventListener('mouseup', onWindowUp);
         if (!moved) return;
 
-        // 用户坐标 → 页面坐标：按原始块与当前显示块的比例换算
-        const ratioX = startBBox.w > 0 ? origBBox.w / startBBox.w : 1;
-        const ratioY = startBBox.h > 0 ? origBBox.h / startBBox.h : 1;
-        const nx = origBBox.x + (currentBBox.x - startBBox.x) * ratioX;
-        const ny = origBBox.y + (currentBBox.y - startBBox.y) * ratioY;
-        const nw = currentBBox.w * ratioX;
-        const nh = currentBBox.h * ratioY;
-        const newPosition = [nx, ny, nx + nw, ny, nx + nw, ny + nh, nx, ny + nh].map(Math.round);
+        const scaleX = groupStartBBox.w > 0 ? currentBBox.w / groupStartBBox.w : 1;
+        const scaleY = groupStartBBox.h > 0 ? currentBBox.h / groupStartBBox.h : 1;
+
+        const updates: { contentId: string | number; position: number[] }[] = [];
+        for (const it of items) {
+          const finalPolyBox: IBBox = {
+            x: currentBBox.x + (it.startBBox.x - groupStartBBox.x) * scaleX,
+            y: currentBBox.y + (it.startBBox.y - groupStartBBox.y) * scaleY,
+            w: it.startBBox.w * scaleX,
+            h: it.startBBox.h * scaleY,
+          };
+
+          const ratioX = it.startBBox.w > 0 ? it.origBBox.w / it.startBBox.w : 1;
+          const ratioY = it.startBBox.h > 0 ? it.origBBox.h / it.startBBox.h : 1;
+          const nx = it.origBBox.x + (finalPolyBox.x - it.startBBox.x) * ratioX;
+          const ny = it.origBBox.y + (finalPolyBox.y - it.startBBox.y) * ratioY;
+          const nw = finalPolyBox.w * ratioX;
+          const nh = finalPolyBox.h * ratioY;
+          const newPosition = [nx, ny, nx + nw, ny, nx + nw, ny + nh, nx, ny + nh].map(Math.round);
+
+          updates.push({ contentId: it.contentId, position: newPosition });
+        }
 
         suppressNextClick();
-        onCommitRef.current(contentId, newPosition);
-        // 数据回写触发左侧重渲染后重新挂载手柄
+        onCommitRef.current(updates);
         scheduleRefresh();
       };
 
@@ -397,44 +489,65 @@ const useRectAdjust = ({ enabled, detail, onCommit }: IUseRectAdjustOptions) => 
         window.addEventListener('mouseup', onWindowUp);
       };
 
-      const onPolygonDown = startDrag('move');
-      polygon.addEventListener('mousedown', onPolygonDown);
+      const polygonDownHandlers = items.map((it) => {
+        const fn = startDrag('move');
+        it.polygon.addEventListener('mousedown', fn);
+        return fn;
+      });
+
+      let outlineDownHandler: ((e: MouseEvent) => void) | null = null;
+      if (outlineRect) {
+        outlineDownHandler = startDrag('move');
+        outlineRect.addEventListener('mousedown', outlineDownHandler);
+      }
+
       const handleDowns = handleEls.map((h) => {
         const fn = startDrag(h.mode);
         h.el.addEventListener('mousedown', fn);
         return fn;
       });
 
-      attachedPolygon = polygon;
       detach = () => {
-        polygon.removeEventListener('mousedown', onPolygonDown);
+        items.forEach((it, i) => it.polygon.removeEventListener('mousedown', polygonDownHandlers[i]));
+        if (outlineRect && outlineDownHandler) {
+          outlineRect.removeEventListener('mousedown', outlineDownHandler);
+        }
         handleEls.forEach((h, i) => h.el.removeEventListener('mousedown', handleDowns[i]));
         window.removeEventListener('mousemove', onWindowMove);
         window.removeEventListener('mouseup', onWindowUp);
-        polygon.style.pointerEvents = prevPointerEvents;
-        polygon.style.cursor = prevCursor;
+        for (const it of items) {
+          it.polygon.style.pointerEvents = it.prevPointerEvents;
+          it.polygon.style.cursor = it.prevCursor;
+        }
         restoreTopMost();
         guardSelfMutation(() => {
           group.parentNode?.removeChild(group);
         });
-        if (attachedPolygon === polygon) attachedPolygon = null;
         detach = null;
       };
     };
 
     /**
-     * 从 active polygon 中选出唯一的调整目标：
-     * - 仅 1 个 active → 直接作为目标；
-     * - 多个 active → 仅保留最后点击的那个（跨页块同 id 多个时不挂载）。
+     * 从 active polygons 中按页面归类目标组合：
+     * - 支持单个框或多个框形成的 Group 组合；
+     * - 若跨页则优先选最后点击框所在页或第一页的目标。
      */
-    const pickTarget = (actives: SVGPolygonElement[]): SVGPolygonElement | null => {
-      if (!actives.length) return null;
-      if (actives.length === 1) return actives[0];
-      if (!lastClickedId) return null;
-      const matched = actives.filter(
-        (p) => p.getAttribute('data-content-id') === lastClickedId,
-      );
-      return matched.length === 1 ? matched[0] : null;
+    const pickTargetGroup = (actives: SVGPolygonElement[]): SVGPolygonElement[] => {
+      if (!actives.length) return [];
+      let targetSvg: SVGSVGElement | null = null;
+      if (lastClickedId) {
+        const clicked = actives.find(
+          (p) => p.getAttribute('data-content-id') === lastClickedId,
+        );
+        if (clicked) {
+          targetSvg = clicked.closest('svg');
+        }
+      }
+      if (!targetSvg) {
+        targetSvg = actives[0].closest('svg');
+      }
+      if (!targetSvg) return [];
+      return actives.filter((p) => p.closest('svg') === targetSvg);
     };
 
     /** 移除 #imgContainer 内所有残留的手柄分组（防止泄漏） */
@@ -446,25 +559,24 @@ const useRectAdjust = ({ enabled, detail, onCommit }: IUseRectAdjustOptions) => 
       });
     };
 
-    /** 刷新：依据当前 active polygon 挂载/卸载手柄 */
+    /** 刷新：依据当前 active polygons 挂载/卸载手柄与组合框 */
     const refresh = () => {
       if (disposed) return;
       const actives = Array.from(
         document.querySelectorAll<SVGPolygonElement>('#imgContainer polygon.active'),
       ).filter((p) => !p.classList.contains('catalog'));
 
-      const target = pickTarget(actives);
-      // 无论切换到哪个框/清空，都先卸载现有手柄并清理残留，避免旧手柄泄漏
+      const targetGroup = pickTargetGroup(actives);
       detach?.();
       removeStrayHandles();
-      if (target) {
-        attach(target);
+      if (targetGroup.length > 0) {
+        attach(targetGroup);
       }
     };
 
     /**
      * 容器点击：
-     * - 点击识别框 → 记录为最后点击的框，仅它可调整；
+     * - 点击识别框 → 记录为最后点击的框；
      * - 点击空白处 → 清除所有选中/编辑态。
      */
     const onContainerClick = (e: MouseEvent) => {

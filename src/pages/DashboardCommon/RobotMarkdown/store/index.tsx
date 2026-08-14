@@ -251,27 +251,51 @@ const useStore = () => {
     });
   };
 
-  // 更新指定 detail 块的 position（左侧视图调整框位置/大小后回写），
+  // 更新指定 detail 块的 position（左侧视图调整框位置/大小后回写，支持单个或批量更新），
   // 同时同步 currentFile 的 result 与 rects，保证左侧框与右侧试卷解析数据一致
-  const updateBlockPosition = (contentId: number | string, position: number[]) => {
-    const idx = Number(contentId);
-    if (isNaN(idx) || !Array.isArray(position) || position.length < 8) return;
+  const updateBlockPosition = (
+    contentIdOrUpdates: number | string | { contentId: number | string; position: number[] }[],
+    position?: number[],
+  ) => {
+    const updates: { idx: number; position: number[] }[] = [];
+    if (Array.isArray(contentIdOrUpdates)) {
+      for (const u of contentIdOrUpdates) {
+        const idx = Number(u.contentId);
+        if (!isNaN(idx) && Array.isArray(u.position) && u.position.length >= 8) {
+          updates.push({ idx, position: u.position });
+        }
+      }
+    } else {
+      const idx = Number(contentIdOrUpdates);
+      if (!isNaN(idx) && Array.isArray(position) && position.length >= 8) {
+        updates.push({ idx, position });
+      }
+    }
+    if (!updates.length) return;
 
     setResultJson((pre) => {
       if (!pre) return pre;
       const baseDetail = pre.detail_new || pre.detail;
-      if (!Array.isArray(baseDetail) || !baseDetail[idx]) return pre;
+      if (!Array.isArray(baseDetail)) return pre;
       const newDetail = cloneDeep([...baseDetail]);
-      newDetail[idx] = { ...newDetail[idx], position };
+      for (const u of updates) {
+        if (newDetail[u.idx]) {
+          newDetail[u.idx] = { ...newDetail[u.idx], position: u.position };
+        }
+      }
       return { ...pre, detail_new: newDetail };
     });
 
     setCurrentFile((pre: any) => {
       if (!pre?.result) return pre;
       const updateDetail = (detail?: any[]) => {
-        if (!Array.isArray(detail) || !detail[idx]) return detail;
+        if (!Array.isArray(detail)) return detail;
         const copy = [...detail];
-        copy[idx] = { ...copy[idx], position };
+        for (const u of updates) {
+          if (copy[u.idx]) {
+            copy[u.idx] = { ...copy[u.idx], position: u.position };
+          }
+        }
         return copy;
       };
       const result = { ...pre.result };
@@ -283,7 +307,10 @@ const useStore = () => {
         if (!Array.isArray(rects)) return rects;
         return rects.map((pageRects) =>
           Array.isArray(pageRects)
-            ? pageRects.map((r) => (Number(r?.content_id) === idx ? { ...r, position } : r))
+            ? pageRects.map((r) => {
+                const matched = updates.find((u) => Number(r?.content_id) === u.idx);
+                return matched ? { ...r, position: matched.position } : r;
+              })
             : pageRects,
         );
       };
@@ -292,6 +319,74 @@ const useStore = () => {
         result,
         rects: updateRects(pre.rects),
         newRects: updateRects(pre.newRects),
+      };
+    });
+  };
+
+  // 删除指定的 detail 块（支持单个或批量，通过清空 position 移除，保持 detail 数组索引不变）
+  const deleteBlock = (contentIdOrIds: number | string | (number | string)[]) => {
+    const ids = (Array.isArray(contentIdOrIds) ? contentIdOrIds : [contentIdOrIds])
+      .map(Number)
+      .filter((n) => !isNaN(n));
+    if (!ids.length) return;
+
+    setResultJson((pre) => {
+      if (!pre) return pre;
+      const baseDetail = pre.detail_new || pre.detail;
+      if (!Array.isArray(baseDetail)) return pre;
+      const newDetail = cloneDeep([...baseDetail]);
+      for (const idx of ids) {
+        if (newDetail[idx]) {
+          newDetail[idx] = {
+            ...newDetail[idx],
+            position: undefined,
+            pos_list: undefined,
+            split_section_positions: undefined,
+            split_section_page_ids: undefined,
+            _deleted: true,
+          };
+        }
+      }
+      return { ...pre, detail_new: newDetail };
+    });
+
+    setCurrentFile((pre: any) => {
+      if (!pre?.result) return pre;
+      const updateDetail = (detail?: any[]) => {
+        if (!Array.isArray(detail)) return detail;
+        const copy = [...detail];
+        for (const idx of ids) {
+          if (copy[idx]) {
+            copy[idx] = {
+              ...copy[idx],
+              position: undefined,
+              pos_list: undefined,
+              split_section_positions: undefined,
+              split_section_page_ids: undefined,
+              _deleted: true,
+            };
+          }
+        }
+        return copy;
+      };
+      const result = { ...pre.result };
+      result.detail = updateDetail(result.detail);
+      if (result.detail_new) result.detail_new = updateDetail(result.detail_new);
+
+      // 从 rects/newRects 中过滤掉已删除的块
+      const filterRects = (rects?: any[][]) => {
+        if (!Array.isArray(rects)) return rects;
+        return rects.map((pageRects) =>
+          Array.isArray(pageRects)
+            ? pageRects.filter((r) => !ids.includes(Number(r?.content_id)))
+            : pageRects,
+        );
+      };
+      return {
+        ...pre,
+        result,
+        rects: filterRects(pre.rects),
+        newRects: filterRects(pre.newRects),
       };
     });
   };
@@ -326,6 +421,7 @@ const useStore = () => {
     setExamPaperPreviewFormat,
     updateResultJson,
     updateBlockPosition,
+    deleteBlock,
     markdownEditorRef,
     resultScrollerRef,
     viewerVirtuosoRef,

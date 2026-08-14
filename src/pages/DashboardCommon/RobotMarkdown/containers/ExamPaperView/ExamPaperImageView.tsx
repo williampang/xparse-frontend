@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Spin, Tag, Empty } from 'antd';
+import { Spin, Tag, Empty, message } from 'antd';
 import { downloadOcrImg } from '@/services/robot';
 import { addDataToURL } from '@/utils';
 import type { IExamPaperData, IExamPaperQuestion } from '../../data.d';
 import { clearAllActive, highlightLeftViewRects } from './helpers';
+import { storeContainer } from '../../store';
 import styles from './index.less';
 
 interface IProps {
@@ -405,23 +406,9 @@ const blocksToRegions = (result: any, blocks: IBlock[]): IQuestionRegion[] => {
     }
     const orderedClusters = orderClustersByReadingOrder(textClusters);
 
-    // 图片拆分的切线：栏间隙中点；兜底用文本簇栏间空隙中点
-    const cutLines = gutters.length
-      ? gutters.map(([g0, g1]) => (g0 + g1) / 2)
-      : (() => {
-          const ranges = groupClustersIntoColumns(
-            textClusters.filter((c) => calcBBox(c).w <= 0.7 * pageWidth),
-          )
-            .map((col) => col.bbox)
-            .sort((a, b) => a.x - b.x);
-          const lines: number[] = [];
-          for (let i = 0; i + 1 < ranges.length; i += 1) {
-            const gapStart = ranges[i].x + ranges[i].w;
-            const gapEnd = ranges[i + 1].x;
-            if (gapEnd > gapStart) lines.push((gapStart + gapEnd) / 2);
-          }
-          return lines;
-        })();
+    // 图片拆分的切线：仅在整页严格探测到分栏间隙（如左右双栏/双页合扫）时才拆分跨栏图片，
+    // 单栏页面中即便下方有小标签（如 A-A、B-B）也不将上方的全宽图片误切
+    const cutLines = gutters.map(([g0, g1]) => (g0 + g1) / 2);
 
     // 图片块：每块单独一个区域，不参与聚类（如横排选项图、左右结构图各自独立展示）；
     // 跨越栏间隙的图片块（OCR 将左右两栏的图合并成一块）沿栏间隙切开为各栏子区域
@@ -835,6 +822,7 @@ const ImageQuestionItem: React.FC<{
   isPdf,
   showIndex = true,
 }) => {
+  const { deleteBlock } = storeContainer.useContainer();
   const sections = useMemo(() => getQuestionImageSections(result, question), [result, question]);
   const questionContentId = question.contentIds.length > 0 ? question.contentIds[0] : undefined;
   const hasAnyRegion =
@@ -843,6 +831,13 @@ const ImageQuestionItem: React.FC<{
     sections.answer.length > 0 ||
     sections.analysis.length > 0 ||
     sections.meta.length > 0;
+
+  const handleDeletePiece = (e: React.MouseEvent, contentIds: (string | number)[]) => {
+    e.stopPropagation();
+    clearAllActive(document.documentElement, styles.active);
+    deleteBlock?.(contentIds);
+    message.success('已删除');
+  };
 
   const renderCropPiece = (region: IQuestionRegion, key: string) => (
     <div
@@ -859,6 +854,14 @@ const ImageQuestionItem: React.FC<{
       }}
       title={`第 ${region.pageNumber} 页 · 点击在左侧视图中定位`}
     >
+      <button
+        type="button"
+        className={styles.cropDeleteBtn}
+        onClick={(e) => handleDeletePiece(e, region.contentIds)}
+        title="删除此图片"
+      >
+        ×
+      </button>
       <CropRegionImage
         key={`${region.pageId}_${region.bbox.x}_${region.bbox.y}_${region.bbox.w}_${region.bbox.h}`}
         result={result}
