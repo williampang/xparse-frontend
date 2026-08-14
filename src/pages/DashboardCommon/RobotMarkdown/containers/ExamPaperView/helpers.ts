@@ -14,7 +14,10 @@ export const clearAllActive = (container: HTMLElement, activeClassName: string) 
 let highlightSeq = 0;
 
 /** 高亮左侧视图对应的 polygon */
-export const highlightLeftViewRects = (contentIds: (string | number)[]) => {
+export const highlightLeftViewRects = (
+  contentIds: (string | number)[],
+  preferredPageNumber?: number,
+) => {
   const viewerContainer = document.querySelector<HTMLElement>('#imgContainer');
   if (!viewerContainer || contentIds.length === 0) return;
 
@@ -26,12 +29,19 @@ export const highlightLeftViewRects = (contentIds: (string | number)[]) => {
     const targetPolygons = viewerContainer.querySelectorAll<HTMLElement>(idSelector);
     if (targetPolygons.length > 0) {
       targetPolygons.forEach((item) => item.classList.add('active'));
-      const firstPolygon = targetPolygons[0];
-      const pageDom = firstPolygon.closest('[data-page-number]') as HTMLElement;
+      let targetPolygon = targetPolygons[0];
+      if (typeof preferredPageNumber === 'number') {
+        const matched = Array.from(targetPolygons).find((p) => {
+          const pNum = p.closest('[data-page-number]')?.getAttribute('data-page-number');
+          return pNum === String(preferredPageNumber);
+        });
+        if (matched) targetPolygon = matched;
+      }
+      const pageDom = targetPolygon.closest('[data-page-number]') as HTMLElement;
       if (pageDom) {
         scrollIntoViewIfNeeded(pageDom, viewerContainer, { block: 'nearest', inline: 'nearest' });
       }
-      scrollIntoViewIfNeeded(firstPolygon, viewerContainer, {
+      scrollIntoViewIfNeeded(targetPolygon, viewerContainer, {
         block: 'nearest',
         inline: 'nearest',
       });
@@ -47,7 +57,7 @@ export const highlightLeftViewRects = (contentIds: (string | number)[]) => {
         clearInterval(timer);
         return;
       }
-      count++;
+      count += 1;
       if (handle() || count >= 30) {
         clearInterval(timer);
       }

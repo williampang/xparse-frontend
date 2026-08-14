@@ -21,9 +21,12 @@ interface IQuestionRegion {
 }
 
 /** 题目某一角色（题干/选项/答案/解析）对应的裁剪分组 */
-interface IRegionGroup {
-  label?: string; // 如 "选项 A"
-  regions: IQuestionRegion[];
+interface IQuestionImageSections {
+  stem: IQuestionRegion[];
+  options: { label: string; regions: IQuestionRegion[] }[];
+  answer: IQuestionRegion[];
+  analysis: IQuestionRegion[];
+  meta: IQuestionRegion[];
 }
 
 interface IPageSource {
@@ -35,10 +38,28 @@ interface IPageSource {
   coordHeight: number;
 }
 
-/** 从 detail 块中取出 8 点坐标 */
-const getBlockPosition = (item: any): number[] | null => {
+/** 从 detail 块中取出位置列表（支持跨页/跨栏的 split_section_positions） */
+const getItemPositions = (item: any): { pageId: number; pos: number[] }[] => {
+  if (!item) return [];
+  if (Array.isArray(item.split_section_positions) && item.split_section_positions.length > 0) {
+    const pageIds = Array.isArray(item.split_section_page_ids) ? item.split_section_page_ids : [];
+    const basePageId = Number(item.page_id);
+    return item.split_section_positions
+      .map((pos: number[], idx: number) => ({
+        pageId: typeof pageIds[idx] === 'number' ? pageIds[idx] : basePageId + idx,
+        pos,
+      }))
+      .filter(
+        (entry: { pageId: number; pos: number[] }) =>
+          Array.isArray(entry.pos) && entry.pos.length >= 8 && !isNaN(entry.pageId),
+      );
+  }
   const pos = item?.position || item?.pos_list?.[0];
-  return Array.isArray(pos) && pos.length >= 8 ? pos : null;
+  const pageId = Number(item.page_id);
+  if (Array.isArray(pos) && pos.length >= 8 && !isNaN(pageId)) {
+    return [{ pageId, pos }];
+  }
+  return [];
 };
 
 interface IBlock {
@@ -49,7 +70,7 @@ interface IBlock {
   isImage: boolean;
 }
 
-/** 根据 contentIds 从 detail 中收集带位置的块 */
+/** 根据 contentIds 从 detail 中收集带位置的块（支持单块跨页拆为多个子块） */
 const getBlocksByIds = (result: any, contentIds: (string | number)[]): IBlock[] => {
   const detail = result?.detail_new || result?.detail;
   if (!Array.isArray(detail) || !contentIds?.length) return [];
@@ -58,26 +79,25 @@ const getBlocksByIds = (result: any, contentIds: (string | number)[]): IBlock[] 
     const idx = Number(id);
     if (isNaN(idx) || !detail[idx]) continue;
     const item = detail[idx];
-    const pos = getBlockPosition(item);
-    const pageId = Number(item.page_id);
-    if (!pos || isNaN(pageId)) continue;
-
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-    for (let i = 0; i < pos.length; i += 2) {
-      minX = Math.min(minX, pos[i]);
-      maxX = Math.max(maxX, pos[i]);
-      minY = Math.min(minY, pos[i + 1]);
-      maxY = Math.max(maxY, pos[i + 1]);
+    const posEntries = getItemPositions(item);
+    for (const { pageId, pos } of posEntries) {
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      for (let i = 0; i < pos.length; i += 2) {
+        minX = Math.min(minX, pos[i]);
+        maxX = Math.max(maxX, pos[i]);
+        minY = Math.min(minY, pos[i + 1]);
+        maxY = Math.max(maxY, pos[i + 1]);
+      }
+      blocks.push({
+        id,
+        pageId,
+        bbox: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
+        isImage: item.type === 'image',
+      });
     }
-    blocks.push({
-      id,
-      pageId,
-      bbox: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
-      isImage: item.type === 'image',
-    });
   }
   return blocks;
 };
@@ -269,17 +289,18 @@ const detectPageGutters = (result: any, pageId: number, pageWidth: number): [num
     const ranges: { x0: number; x1: number }[] = [];
     const centers: number[] = [];
     for (const item of detail) {
-      if (Number(item.page_id) !== pageId) continue;
-      const pos = getBlockPosition(item);
-      if (!pos) continue;
-      let minX = Infinity;
-      let maxX = -Infinity;
-      for (let i = 0; i < pos.length; i += 2) {
-        minX = Math.min(minX, pos[i]);
-        maxX = Math.max(maxX, pos[i]);
+      const posEntries = getItemPositions(item);
+      for (const { pageId: itemPageId, pos } of posEntries) {
+        if (itemPageId !== pageId) continue;
+        let minX = Infinity;
+        let maxX = -Infinity;
+        for (let i = 0; i < pos.length; i += 2) {
+          minX = Math.min(minX, pos[i]);
+          maxX = Math.max(maxX, pos[i]);
+        }
+        ranges.push({ x0: minX, x1: maxX });
+        centers.push((minX + maxX) / 2);
       }
-      ranges.push({ x0: minX, x1: maxX });
-      centers.push((minX + maxX) / 2);
     }
     // 功能性校验：栏间隙是块中心点的空隙——
     // 1) 带内不能有任何块的中心（横跨间隙的页码/全宽表格/跨栏图片除外，
@@ -440,45 +461,33 @@ const blocksToRegions = (result: any, blocks: IBlock[]): IQuestionRegion[] => {
 
 /**
  * 计算题目的裁剪分组：
- * - 始终按角色（题干/选项/答案/解析/元信息）分组各自聚类，避免相邻的
- *   不同角色块（如【知识点】与【解析】）被空间聚类误合并成同一张裁剪图；
- * - 无分组信息的旧数据才退化为全部块一起聚类。
+ * - 题干/选项/答案/解析/元信息分别归类到对应字段；
+ * - 无分组信息的旧数据退化为全部块作为题干。
  */
-const getQuestionRegionGroups = (result: any, question: IExamPaperQuestion): IRegionGroup[] => {
+const getQuestionImageSections = (result: any, question: IExamPaperQuestion): IQuestionImageSections => {
   const groups = question.contentGroups;
 
   if (!groups) {
-    const regions = blocksToRegions(result, getBlocksByIds(result, question.contentIds));
-    return regions.length ? [{ regions }] : [];
+    const stem = blocksToRegions(result, getBlocksByIds(result, question.contentIds));
+    return {
+      stem,
+      options: [],
+      answer: [],
+      analysis: [],
+      meta: [],
+    };
   }
 
-  const hasOptionGroups = groups.options.some((opt) => opt.contentIds?.length);
-  const resultGroups: IRegionGroup[] = [];
-
-  const stemRegions = blocksToRegions(result, getBlocksByIds(result, groups.stem));
-  if (stemRegions.length) {
-    resultGroups.push({ label: '题干', regions: stemRegions });
-  }
-
-  if (hasOptionGroups) {
-    for (const opt of groups.options) {
-      if (!opt.contentIds?.length) continue;
-      const regions = blocksToRegions(result, getBlocksByIds(result, opt.contentIds));
-      if (regions.length) {
-        resultGroups.push({ label: `选项 ${opt.label}`, regions });
-      }
-    }
-  }
-
-  const answerRegions = blocksToRegions(result, getBlocksByIds(result, groups.answer));
-  if (answerRegions.length) {
-    resultGroups.push({ label: '答案', regions: answerRegions });
-  }
-
-  const analysisRegions = blocksToRegions(result, getBlocksByIds(result, groups.analysis));
-  if (analysisRegions.length) {
-    resultGroups.push({ label: '解析', regions: analysisRegions });
-  }
+  const stem = blocksToRegions(result, getBlocksByIds(result, groups.stem));
+  const options = (groups.options || [])
+    .filter((opt) => opt.contentIds?.length)
+    .map((opt) => ({
+      label: opt.label,
+      regions: blocksToRegions(result, getBlocksByIds(result, opt.contentIds)),
+    }))
+    .filter((item) => item.regions.length > 0);
+  const answer = blocksToRegions(result, getBlocksByIds(result, groups.answer));
+  const analysis = blocksToRegions(result, getBlocksByIds(result, groups.analysis));
 
   // 元信息（知识点/难度/分值）
   const metaBlocks = [
@@ -486,12 +495,9 @@ const getQuestionRegionGroups = (result: any, question: IExamPaperQuestion): IRe
     ...(groups.difficulty || []),
     ...(groups.score || []),
   ];
-  const metaRegions = blocksToRegions(result, getBlocksByIds(result, metaBlocks));
-  if (metaRegions.length) {
-    resultGroups.push({ label: '元信息', regions: metaRegions });
-  }
+  const meta = blocksToRegions(result, getBlocksByIds(result, metaBlocks));
 
-  return resultGroups;
+  return { stem, options, answer, analysis, meta };
 };
 
 /** 加载图片为 HTMLImageElement */
@@ -660,12 +666,13 @@ const getPageBlockExtent = (result: any, pageId: number): { maxX: number; maxY: 
   const detail = result?.detail_new || result?.detail;
   if (Array.isArray(detail)) {
     for (const item of detail) {
-      if (Number(item.page_id) !== pageId) continue;
-      const pos = getBlockPosition(item);
-      if (!pos) continue;
-      for (let i = 0; i < pos.length; i += 2) {
-        maxX = Math.max(maxX, pos[i]);
-        maxY = Math.max(maxY, pos[i + 1]);
+      const posEntries = getItemPositions(item);
+      for (const { pageId: itemPageId, pos } of posEntries) {
+        if (itemPageId !== pageId) continue;
+        for (let i = 0; i < pos.length; i += 2) {
+          maxX = Math.max(maxX, pos[i]);
+          maxY = Math.max(maxY, pos[i + 1]);
+        }
       }
     }
   }
@@ -828,8 +835,38 @@ const ImageQuestionItem: React.FC<{
   isPdf,
   showIndex = true,
 }) => {
-  const regionGroups = useMemo(() => getQuestionRegionGroups(result, question), [result, question]);
+  const sections = useMemo(() => getQuestionImageSections(result, question), [result, question]);
   const questionContentId = question.contentIds.length > 0 ? question.contentIds[0] : undefined;
+  const hasAnyRegion =
+    sections.stem.length > 0 ||
+    sections.options.length > 0 ||
+    sections.answer.length > 0 ||
+    sections.analysis.length > 0 ||
+    sections.meta.length > 0;
+
+  const renderCropPiece = (region: IQuestionRegion, key: string) => (
+    <div
+      key={key}
+      className={styles.imageCropPiece}
+      data-content-id={region.contentIds[0]}
+      onClick={(e) => {
+        e.stopPropagation();
+        // 先清除两侧旧选中态，再高亮当前区域，避免多个图块同时处于选中态
+        // （多个 active polygon 会导致左侧无法进入拖拽编辑态）
+        clearAllActive(document.documentElement, styles.active);
+        e.currentTarget.classList.add(styles.active);
+        highlightLeftViewRects(region.contentIds, region.pageNumber);
+      }}
+      title={`第 ${region.pageNumber} 页 · 点击在左侧视图中定位`}
+    >
+      <CropRegionImage
+        key={`${region.pageId}_${region.bbox.x}_${region.bbox.y}_${region.bbox.w}_${region.bbox.h}`}
+        result={result}
+        region={region}
+        isPdf={isPdf}
+      />
+    </div>
+  );
 
   return (
     <div
@@ -837,44 +874,72 @@ const ImageQuestionItem: React.FC<{
       data-question-content-ids={question.contentIds.join(',')}
       data-content-id={questionContentId}
     >
-      <div className={styles.questionHeader}>
-        {showIndex && <span className={styles.questionIndex}>{question.index}.</span>}
-        {question.typeDesc && <Tag className={styles.questionTypeTag}>{question.typeDesc}</Tag>}
-      </div>
-
-      {regionGroups.length === 0 ? (
+      {!hasAnyRegion ? (
         <div className={styles.cropFailed}>该题目暂无图片定位信息</div>
       ) : (
-        <div className={styles.cropRegionList}>
-          {regionGroups.map((group, gIdx) =>
-            group.regions.map((region, rIdx) => (
-              <div
-                key={`${gIdx}-${rIdx}`}
-                className={styles.cropRegionItem}
-                data-content-id={region.contentIds[0]}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // 先清除两侧旧选中态，再高亮当前区域，避免多个图块同时处于选中态
-                  // （多个 active polygon 会导致左侧无法进入拖拽编辑态）
-                  clearAllActive(document.documentElement, styles.active);
-                  e.currentTarget.classList.add(styles.active);
-                  highlightLeftViewRects(region.contentIds);
-                }}
-                title="点击在左侧视图中定位"
-              >
-                <CropRegionImage
-                  key={`${region.pageId}_${region.bbox.x}_${region.bbox.y}_${region.bbox.w}_${region.bbox.h}`}
-                  result={result}
-                  region={region}
-                  isPdf={isPdf}
-                />
-                <div className={styles.regionPosInfo}>
-                  {group.label && <span className={styles.regionLabel}>{group.label} · </span>}
-                  第 {region.pageNumber} 页 · x: {Math.round(region.bbox.x)}, y: {Math.round(region.bbox.y)} ·
-                  宽 {Math.round(region.bbox.w)} × 高 {Math.round(region.bbox.h)}
-                </div>
+        <div className={styles.imageQuestionBody}>
+          {/* 题干（含题号在同一行） */}
+          <div className={styles.imageQuestionStemRow}>
+            {showIndex && <span className={styles.questionIndex}>{question.index}.</span>}
+            {sections.stem.length > 0 && (
+              <div className={styles.imageQuestionStem}>
+                {sections.stem.map((region, rIdx) =>
+                  renderCropPiece(region, `stem-${region.pageId}-${region.bbox.x}-${region.bbox.y}-${rIdx}`),
+                )}
               </div>
-            )),
+            )}
+          </div>
+
+          {/* 选项 */}
+          {sections.options.length > 0 && (
+            <div className={styles.imageQuestionOptions}>
+              {sections.options.map((opt, optIdx) => (
+                <div key={`opt-${opt.label}-${optIdx}`} className={styles.imageOptionItem}>
+                  <span className={styles.optionLabel}>{opt.label}.</span>
+                  <div className={styles.imageOptionContent}>
+                    {opt.regions.map((region, rIdx) =>
+                      renderCropPiece(region, `opt-${opt.label}-${region.pageId}-${rIdx}`),
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 答案 */}
+          {sections.answer.length > 0 && (
+            <div className={styles.questionAnswer}>
+              <span className={styles.answerLabel}>【答案】</span>
+              <div className={styles.imageGroupContent}>
+                {sections.answer.map((region, rIdx) =>
+                  renderCropPiece(region, `ans-${region.pageId}-${rIdx}`),
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 解析 */}
+          {sections.analysis.length > 0 && (
+            <div className={styles.questionAnalysis}>
+              <span className={styles.analysisLabel}>【解析】</span>
+              <div className={styles.imageGroupContent}>
+                {sections.analysis.map((region, rIdx) =>
+                  renderCropPiece(region, `analysis-${region.pageId}-${rIdx}`),
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 元信息 */}
+          {sections.meta.length > 0 && (
+            <div className={styles.questionMeta}>
+              <span className={styles.knowledgeLabel}>【元信息】</span>
+              <div className={styles.imageGroupContent}>
+                {sections.meta.map((region, rIdx) =>
+                  renderCropPiece(region, `meta-${region.pageId}-${rIdx}`),
+                )}
+              </div>
+            </div>
           )}
         </div>
       )}
@@ -883,7 +948,7 @@ const ImageQuestionItem: React.FC<{
         <div className={styles.subQuestions}>
           <div className={styles.subQuestionsTitle}>小题：</div>
           {question.subQuestions.map((sub, idx) => (
-            <ImageQuestionItem key={idx} result={result} question={sub} isPdf={isPdf} />
+            <ImageQuestionItem key={`sub-${sub.index || idx}`} result={result} question={sub} isPdf={isPdf} />
           ))}
         </div>
       )}

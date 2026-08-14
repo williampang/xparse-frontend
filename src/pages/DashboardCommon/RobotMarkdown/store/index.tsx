@@ -39,6 +39,9 @@ const useStore = () => {
   // 试卷编辑/查看模式
   const [examPaperMode, setExamPaperMode] = useState<'view' | 'edit'>('view');
 
+  // 试卷展示格式：markdown 格式 / 图片预览
+  const [examPaperPreviewFormat, setExamPaperPreviewFormat] = useState<'markdown' | 'image'>('markdown');
+
   // 是否展示markdown最新修改结果
   const [_showModifiedMarkdown, setShowModifiedMarkdown] = useState<boolean>(true);
   const showModifiedMarkdown = useMemo(
@@ -319,6 +322,8 @@ const useStore = () => {
     setMarkdownMode,
     examPaperMode,
     setExamPaperMode,
+    examPaperPreviewFormat,
+    setExamPaperPreviewFormat,
     updateResultJson,
     updateBlockPosition,
     markdownEditorRef,

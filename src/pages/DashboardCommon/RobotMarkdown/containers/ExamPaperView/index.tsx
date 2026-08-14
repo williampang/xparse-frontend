@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect, useLayoutEffect } from 'react';
 import classNames from 'classnames';
-import { Tag, Empty, Input, Button, Tooltip, message, Radio } from 'antd';
+import { Tag, Empty, Input, Button, Tooltip, message } from 'antd';
 import type { IExamPaperData, IExamPaperQuestion, IExamPaperSection } from '../../data.d';
 import { formatExamPaper } from '../../utils';
 import MarkdownRender from '../../MarkdownRender/MarkdownRender';
@@ -408,7 +408,13 @@ const QUESTION_INDEX_REGEX = /^\s*(?:[（(][^）)\d]{1,8}[）)])?(\d{1,3})\s*[.�
 /** 试卷结构视图 */
 const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { examPaperMode, setResultJson, updateBlockPosition } = storeContainer.useContainer();
+  const {
+    examPaperMode,
+    setResultJson,
+    updateBlockPosition,
+    examPaperPreviewFormat,
+    setExamPaperPreviewFormat,
+  } = storeContainer.useContainer();
 
   // 左侧预览区选中单个识别框时支持拖拽移动/手柄缩放，结束后回写 position，
   // 触发右侧 exam_paper 数据与裁剪图同步更新
@@ -450,9 +456,6 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
   // 当前正在编辑的题目 key（格式: `${sectionIdx}-${questionIdx}`）
   const [editingQuestionKey, setEditingQuestionKey] = useState<string | null>(null);
 
-  // 查看模式下的展示格式：markdown 格式 / 图片预览
-  const [previewFormat, setPreviewFormat] = useState<'markdown' | 'image'>('markdown');
-
   // CKEditor 实例注册表，用于图片插入等操作
   const editorRegistry = useRef<EditorRegistry>(new Map()).current;
 
@@ -480,7 +483,7 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
       setEditedData(JSON.parse(JSON.stringify(examData)));
       setEditingQuestionKey(null);
       // 编辑模式仅支持 markdown 格式
-      setPreviewFormat('markdown');
+      setExamPaperPreviewFormat?.('markdown');
     } else if (examPaperMode !== 'edit') {
       // 退出编辑模式：清除
       setEditedData(null);
@@ -780,7 +783,7 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
     return <Empty description="暂无试卷数据" />;
   }
 
-  const isImagePreview = examPaperMode !== 'edit' && previewFormat === 'image';
+  const isImagePreview = examPaperMode !== 'edit' && examPaperPreviewFormat === 'image';
 
   return (
     <div
@@ -798,22 +801,6 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
         <span className={styles.metaDivider}>|</span>
         <span>共 {displayData.questionCount} 小题</span>
       </div>
-
-      {/* 展示格式切换：markdown 格式 / 图片预览 */}
-      {examPaperMode !== 'edit' && (
-        <div className={styles.previewModeBar}>
-          <Radio.Group
-            size="small"
-            value={previewFormat}
-            optionType="button"
-            buttonStyle="solid"
-            onChange={(e) => setPreviewFormat(e.target.value)}
-          >
-            <Radio.Button value="markdown">Markdown 格式</Radio.Button>
-            <Radio.Button value="image">图片预览</Radio.Button>
-          </Radio.Group>
-        </div>
-      )}
 
       {isImagePreview ? (
         <ExamPaperImageView result={result} data={displayData} isPdf={isPdf} />

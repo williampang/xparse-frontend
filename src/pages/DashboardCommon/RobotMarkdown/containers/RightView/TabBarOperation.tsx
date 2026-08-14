@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Carousel, Dropdown, Menu, Tooltip } from 'antd';
+import { Button, Carousel, Dropdown, Menu, Radio, Tooltip } from 'antd';
 import classNames from 'classnames';
 import { useSelector } from 'dva';
 import type { ConnectState } from '@/models/connect';
@@ -48,7 +48,16 @@ const TabBarOperation = (props: TabBarOperationProps) => {
     showEdit,
   } = useResultOperations(props);
 
-  const { resultType, resultJson, markdownMode, examPaperMode, setExamPaperMode, saveResultJson } = storeContainer.useContainer();
+  const {
+    resultType,
+    resultJson,
+    markdownMode,
+    examPaperMode,
+    setExamPaperMode,
+    saveResultJson,
+    examPaperPreviewFormat,
+    setExamPaperPreviewFormat,
+  } = storeContainer.useContainer();
 
   const [examPaperSaveLoading, setExamPaperSaveLoading] = useState(false);
 
@@ -187,6 +196,20 @@ const TabBarOperation = (props: TabBarOperationProps) => {
   return (
     <div className={styles['tab-bar-extra']}>
       {ads}
+
+      {resultType === ResultType.exam_paper && examPaperMode !== 'edit' && (
+        <Radio.Group
+          size="small"
+          className={styles['tab-preview-format']}
+          value={examPaperPreviewFormat}
+          optionType="button"
+          buttonStyle="solid"
+          onChange={(e) => setExamPaperPreviewFormat?.(e.target.value)}
+        >
+          <Radio.Button value="markdown">Markdown 格式</Radio.Button>
+          <Radio.Button value="image">图片预览</Radio.Button>
+        </Radio.Group>
+      )}
 
       {resultType === ResultType.exam_paper && (
         <Button
