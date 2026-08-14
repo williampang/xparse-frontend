@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Carousel, Dropdown, Menu, Radio, Tooltip } from 'antd';
+import { Button, Carousel, Dropdown, Menu, Radio, Tooltip, message } from 'antd';
+import { UndoOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
 import { useSelector } from 'dva';
 import type { ConnectState } from '@/models/connect';
@@ -57,6 +58,8 @@ const TabBarOperation = (props: TabBarOperationProps) => {
     saveResultJson,
     examPaperPreviewFormat,
     setExamPaperPreviewFormat,
+    canUndoDelete,
+    undoDeleteBlock,
   } = storeContainer.useContainer();
 
   const [examPaperSaveLoading, setExamPaperSaveLoading] = useState(false);
@@ -210,6 +213,27 @@ const TabBarOperation = (props: TabBarOperationProps) => {
           <Radio.Button value="image">图片预览</Radio.Button>
         </Radio.Group>
       )}
+
+      {resultType === ResultType.exam_paper &&
+        examPaperMode !== 'edit' &&
+        examPaperPreviewFormat === 'image' && (
+          <Tooltip title={canUndoDelete ? '撤销删除图片 (Ctrl/Cmd+Z)' : undefined}>
+            <span>
+              <Button
+                className={classNames(styles['tab-item'], styles['tab-text'])}
+                icon={<UndoOutlined />}
+                disabled={!canUndoDelete}
+                onClick={() => {
+                  if (undoDeleteBlock?.()) {
+                    message.success('已恢复删除的图片');
+                  }
+                }}
+              >
+                撤销删除
+              </Button>
+            </span>
+          </Tooltip>
+        )}
 
       {resultType === ResultType.exam_paper && (
         <Button

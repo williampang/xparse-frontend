@@ -111,26 +111,37 @@
   margin-bottom: 8px;
 }
 
+.questionStemRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 .questionIndex {
   font-size: 15px;
   font-weight: 600;
   color: #1a66ff;
   min-width: 24px;
   flex-shrink: 0;
-  line-height: 1.4;
+  line-height: 1.8;
 }
 
 .questionTypeTag {
-  font-size: 12px;
+  display: none;
 }
 
 .questionStem {
-  margin-bottom: 8px;
-  padding-left: 4px;
+  flex: 1;
+  margin-bottom: 0;
+  padding-left: 0;
   white-space: pre-wrap;
   word-break: break-word;
 
   // Markdown 段落收紧尾部间距，避免题干末尾多出大段空白
+  p:first-child {
+    margin-top: 0;
+  }
   p:last-child {
     margin-bottom: 0;
   }
@@ -631,8 +642,8 @@
 
 .cropDeleteBtn {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -14px;
+  right: -14px;
   width: 20px;
   height: 20px;
   border-radius: 50%;

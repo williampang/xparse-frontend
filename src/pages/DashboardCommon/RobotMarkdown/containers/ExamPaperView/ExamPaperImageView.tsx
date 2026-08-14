@@ -822,7 +822,7 @@ const ImageQuestionItem: React.FC<{
   isPdf,
   showIndex = true,
 }) => {
-  const { deleteBlock } = storeContainer.useContainer();
+  const { deleteBlock, undoDeleteBlock } = storeContainer.useContainer();
   const sections = useMemo(() => getQuestionImageSections(result, question), [result, question]);
   const questionContentId = question.contentIds.length > 0 ? question.contentIds[0] : undefined;
   const hasAnyRegion =
@@ -836,7 +836,24 @@ const ImageQuestionItem: React.FC<{
     e.stopPropagation();
     clearAllActive(document.documentElement, styles.active);
     deleteBlock?.(contentIds);
-    message.success('已删除');
+    message.success(
+      <span>
+        已删除图片{' '}
+        <a
+          style={{ marginLeft: 8, color: '#1a66ff', textDecoration: 'underline', cursor: 'pointer' }}
+          onClick={(ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (undoDeleteBlock?.()) {
+              message.success('已恢复删除的图片');
+            }
+          }}
+        >
+          撤销
+        </a>
+      </span>,
+      4,
+    );
   };
 
   const renderCropPiece = (region: IQuestionRegion, key: string) => (
@@ -961,6 +978,26 @@ const ImageQuestionItem: React.FC<{
 
 /** 试卷图片预览视图：按题目展示其在原始文档中的图片与位置 */
 const ExamPaperImageView: React.FC<IProps> = ({ result, data, isPdf = false }) => {
+  const { undoDeleteBlock, canUndoDelete } = storeContainer.useContainer();
+
+  // 支持 Ctrl+Z / Cmd+Z 快捷撤销删除
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && ['INPUT', 'TEXTAREA'].includes(target.tagName)) return;
+      if (target && target.isContentEditable) return;
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+        if (canUndoDelete && undoDeleteBlock?.()) {
+          e.preventDefault();
+          message.success('已恢复删除的图片');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canUndoDelete, undoDeleteBlock]);
+
   if (!data?.sections?.length) {
     return <Empty description="暂无试卷数据" />;
   }

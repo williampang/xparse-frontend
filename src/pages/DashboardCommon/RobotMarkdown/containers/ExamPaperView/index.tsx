@@ -91,35 +91,25 @@ const EditableQuestionItem: React.FC<{
       data-content-id={questionContentId}
       onClick={handleClick}
     >
-      {/* 题号 */}
-      <div className={styles.questionHeader}>
-        {showIndex && (
-          isEditing ? (
-            <Input
-              className={styles.questionIndexInput}
-              value={String(question.index)}
-              onChange={(e) => onChange(sectionIdx, questionIdx, 'index', e.target.value)}
-              onPressEnter={() => onSplit(sectionIdx, questionIdx)}
-              title="修改题号后按回车可拆分题目"
-            />
-          ) : (
-            <span className={styles.questionIndex}>{question.index}.</span>
-          )
-        )}
-        {isEditing && (
-          <Tooltip title="从左侧选中图片插入到光标位置">
-            <Button size="small" className={styles.insertImgBtn} onClick={handleInsertImage}>
-              插入图片
-            </Button>
-          </Tooltip>
-        )}
-        {!isEditing && (
-          <span className={styles.editHint}>点击编辑</span>
-        )}
-      </div>
-
       {isEditing ? (
         <>
+          <div className={styles.questionHeader}>
+            {showIndex && (
+              <Input
+                className={styles.questionIndexInput}
+                value={String(question.index)}
+                onChange={(e) => onChange(sectionIdx, questionIdx, 'index', e.target.value)}
+                onPressEnter={() => onSplit(sectionIdx, questionIdx)}
+                title="修改题号后按回车可拆分题目"
+              />
+            )}
+            <Tooltip title="从左侧选中图片插入到光标位置">
+              <Button size="small" className={styles.insertImgBtn} onClick={handleInsertImage}>
+                插入图片
+              </Button>
+            </Tooltip>
+          </div>
+
           {/* 题干富文本编辑 */}
           <div className={styles.questionStemEdit}>
             <ExamPaperRichEditor
@@ -203,12 +193,16 @@ const EditableQuestionItem: React.FC<{
         </>
       ) : (
         <>
-          {/* 只读模式：渲染内容 */}
-          {question.stem && (
-            <div className={styles.questionStem} data-content-id={questionContentId}>
-              <RichContent content={question.stem} />
-            </div>
-          )}
+          {/* 只读模式：渲染内容（题号与题干同行显示） */}
+          <div className={styles.questionStemRow}>
+            {showIndex && <span className={styles.questionIndex}>{question.index}.</span>}
+            {question.stem && (
+              <div className={styles.questionStem} data-content-id={questionContentId}>
+                <RichContent content={question.stem} />
+              </div>
+            )}
+            <span className={styles.editHint}>点击编辑</span>
+          </div>
           {question.options.length > 0 && (
             <div className={styles.questionOptions}>
               {question.options.map((opt, idx) => (
@@ -294,14 +288,15 @@ const QuestionItem: React.FC<{ question: IExamPaperQuestion; showIndex?: boolean
       data-question-content-ids={question.contentIds.join(',')}
       data-content-id={questionContentId}
     >
-      <div className={styles.questionHeader}>
+      {/* 只读模式：渲染内容 */}
+      <div className={styles.questionStemRow}>
         {showIndex && <span className={styles.questionIndex}>{question.index}.</span>}
+        {question.stem && (
+          <div className={styles.questionStem} data-content-id={questionContentId}>
+            <RichContent content={question.stem} />
+          </div>
+        )}
       </div>
-      {question.stem && (
-        <div className={styles.questionStem} data-content-id={questionContentId}>
-          <RichContent content={question.stem} />
-        </div>
-      )}
       {question.options.length > 0 && (
         <div className={styles.questionOptions}>
           {question.options.map((opt, idx) => (

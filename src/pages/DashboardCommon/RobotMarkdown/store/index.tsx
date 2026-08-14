@@ -42,6 +42,23 @@ const useStore = () => {
   // 试卷展示格式：markdown 格式 / 图片预览
   const [examPaperPreviewFormat, setExamPaperPreviewFormat] = useState<'markdown' | 'image'>('markdown');
 
+  // 删除历史快照堆栈（用于撤销删除）
+  const [deleteHistory, setDeleteHistory] = useState<
+    {
+      ids: number[];
+      savedSnapshots: {
+        idx: number;
+        itemSnapshot: any;
+        pageRectsSnapshot?: { pageIndex: number; rectItem: any }[];
+      }[];
+    }[]
+  >([]);
+
+  // 当切换文件时清空删除历史
+  useUpdateEffect(() => {
+    setDeleteHistory([]);
+  }, [currentFile?.id]);
+
   // 是否展示markdown最新修改结果
   const [_showModifiedMarkdown, setShowModifiedMarkdown] = useState<boolean>(true);
   const showModifiedMarkdown = useMemo(
@@ -330,6 +347,59 @@ const useStore = () => {
       .filter((n) => !isNaN(n));
     if (!ids.length) return;
 
+    // 记录快照以备撤销
+    const currentDetail =
+      resultJson?.detail_new ||
+      resultJson?.detail ||
+      currentFile?.result?.detail_new ||
+      currentFile?.result?.detail;
+    if (Array.isArray(currentDetail)) {
+      const historyEntry: {
+        ids: number[];
+        savedSnapshots: {
+          idx: number;
+          itemSnapshot: any;
+          pageRectsSnapshot?: { pageIndex: number; rectItem: any }[];
+        }[];
+      } = {
+        ids,
+        savedSnapshots: [],
+      };
+
+      for (const idx of ids) {
+        if (currentDetail[idx]) {
+          const item = currentDetail[idx];
+          const pageRectsSnapshot: { pageIndex: number; rectItem: any }[] = [];
+          const allRects = currentFile?.rects || [];
+          if (Array.isArray(allRects)) {
+            allRects.forEach((pageRects, pageIndex) => {
+              if (Array.isArray(pageRects)) {
+                pageRects.forEach((r) => {
+                  if (Number(r?.content_id) === idx) {
+                    pageRectsSnapshot.push({ pageIndex, rectItem: cloneDeep(r) });
+                  }
+                });
+              }
+            });
+          }
+
+          historyEntry.savedSnapshots.push({
+            idx,
+            itemSnapshot: {
+              position: cloneDeep(item.position),
+              pos_list: cloneDeep(item.pos_list),
+              split_section_positions: cloneDeep(item.split_section_positions),
+              split_section_page_ids: cloneDeep(item.split_section_page_ids),
+            },
+            pageRectsSnapshot,
+          });
+        }
+      }
+      if (historyEntry.savedSnapshots.length) {
+        setDeleteHistory((prev) => [...prev, historyEntry]);
+      }
+    }
+
     setResultJson((pre) => {
       if (!pre) return pre;
       const baseDetail = pre.detail_new || pre.detail;
@@ -391,6 +461,78 @@ const useStore = () => {
     });
   };
 
+  // 撤销最近一次删除
+  const undoDeleteBlock = () => {
+    if (!deleteHistory.length) return false;
+    const lastEntry = deleteHistory[deleteHistory.length - 1];
+    setDeleteHistory((prev) => prev.slice(0, -1));
+
+    setResultJson((pre) => {
+      if (!pre) return pre;
+      const baseDetail = pre.detail_new || pre.detail;
+      if (!Array.isArray(baseDetail)) return pre;
+      const newDetail = cloneDeep([...baseDetail]);
+      for (const snap of lastEntry.savedSnapshots) {
+        if (newDetail[snap.idx]) {
+          newDetail[snap.idx] = {
+            ...newDetail[snap.idx],
+            ...snap.itemSnapshot,
+          };
+          delete newDetail[snap.idx]._deleted;
+        }
+      }
+      return { ...pre, detail_new: newDetail };
+    });
+
+    setCurrentFile((pre: any) => {
+      if (!pre?.result) return pre;
+      const updateDetail = (detail?: any[]) => {
+        if (!Array.isArray(detail)) return detail;
+        const copy = [...detail];
+        for (const snap of lastEntry.savedSnapshots) {
+          if (copy[snap.idx]) {
+            copy[snap.idx] = {
+              ...copy[snap.idx],
+              ...snap.itemSnapshot,
+            };
+            delete copy[snap.idx]._deleted;
+          }
+        }
+        return copy;
+      };
+      const result = { ...pre.result };
+      result.detail = updateDetail(result.detail);
+      if (result.detail_new) result.detail_new = updateDetail(result.detail_new);
+
+      const restoreRects = (rects?: any[][]) => {
+        if (!Array.isArray(rects)) return rects;
+        const copy = rects.map((p) => (Array.isArray(p) ? [...p] : []));
+        for (const snap of lastEntry.savedSnapshots) {
+          if (snap.pageRectsSnapshot) {
+            for (const pr of snap.pageRectsSnapshot) {
+              if (
+                copy[pr.pageIndex] &&
+                !copy[pr.pageIndex].some((r) => Number(r?.content_id) === snap.idx)
+              ) {
+                copy[pr.pageIndex].push(cloneDeep(pr.rectItem));
+              }
+            }
+          }
+        }
+        return copy;
+      };
+
+      return {
+        ...pre,
+        result,
+        rects: restoreRects(pre.rects),
+        newRects: restoreRects(pre.newRects),
+      };
+    });
+
+    return true;
+  };
+
   return {
     type: 'new',
     currentFile,
@@ -422,6 +564,8 @@ const useStore = () => {
     updateResultJson,
     updateBlockPosition,
     deleteBlock,
+    undoDeleteBlock,
+    canUndoDelete: deleteHistory.length > 0,
     markdownEditorRef,
     resultScrollerRef,
     viewerVirtuosoRef,
