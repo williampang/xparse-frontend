@@ -266,12 +266,7 @@ const useContentClick = ({
                 block: 'nearest',
                 inline: 'nearest',
               },
-              targetPolygon[targetPolygon.length - 1]?.getBoundingClientRect().height,
             );
-            // targetPolygon[targetPolygon.length - 1].scrollIntoView({
-            //   block: 'nearest',
-            //   inline: 'nearest',
-            // });
           };
 
           const oldCellPaths = document.querySelectorAll<SVGPathElement>(

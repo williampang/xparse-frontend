@@ -37,15 +37,19 @@ export const highlightLeftViewRects = (
         });
         if (matched) targetPolygon = matched;
       }
-      const pageDom = targetPolygon.closest('[data-page-number]') as HTMLElement;
-      if (pageDom) {
-        scrollIntoViewIfNeeded(pageDom, viewerContainer, { block: 'nearest', inline: 'nearest' });
-      }
       scrollIntoViewIfNeeded(targetPolygon, viewerContainer, {
         block: 'nearest',
         inline: 'nearest',
       });
       return true;
+    }
+    if (typeof preferredPageNumber === 'number') {
+      const pageDom = viewerContainer.querySelector<HTMLElement>(
+        `[data-page-number="${preferredPageNumber}"]`,
+      );
+      if (pageDom) {
+        scrollIntoViewIfNeeded(pageDom, viewerContainer, { block: 'nearest', inline: 'nearest' });
+      }
     }
     return false;
   };
