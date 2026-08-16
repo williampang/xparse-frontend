@@ -233,31 +233,41 @@ const EditableQuestionItem: React.FC<{
           {question.knowledge && (
             <div className={styles.questionMeta}>
               <span className={styles.knowledgeLabel}>【知识点】</span>
-              <RichContent content={question.knowledge} />
+              <div className={styles.metaContent}>
+                <RichContent content={question.knowledge} />
+              </div>
             </div>
           )}
           {question.difficulty && (
             <div className={styles.questionMeta}>
               <span className={styles.difficultyLabel}>【难度】</span>
-              <RichContent content={question.difficulty} />
+              <div className={styles.metaContent}>
+                <RichContent content={question.difficulty} />
+              </div>
             </div>
           )}
           {question.score && (
             <div className={styles.questionMeta}>
               <span className={styles.scoreLabel}>【分值】</span>
-              <RichContent content={question.score} />
+              <div className={styles.metaContent}>
+                <RichContent content={question.score} />
+              </div>
             </div>
           )}
           {question.answer && (
             <div className={styles.questionAnswer}>
               <span className={styles.answerLabel}>【答案】</span>
-              <RichContent content={question.answer} />
+              <div className={styles.metaContent}>
+                <RichContent content={question.answer} />
+              </div>
             </div>
           )}
           {question.analysis && (
             <div className={styles.questionAnalysis}>
               <span className={styles.analysisLabel}>【解析】</span>
-              <RichContent content={question.analysis} />
+              <div className={styles.metaContent}>
+                <RichContent content={question.analysis} />
+              </div>
             </div>
           )}
         </>
@@ -328,31 +338,41 @@ const QuestionItem: React.FC<{ question: IExamPaperQuestion; showIndex?: boolean
       {question.knowledge && (
         <div className={styles.questionMeta}>
           <span className={styles.knowledgeLabel}>【知识点】</span>
-          <RichContent content={question.knowledge} />
+          <div className={styles.metaContent}>
+            <RichContent content={question.knowledge} />
+          </div>
         </div>
       )}
       {question.difficulty && (
         <div className={styles.questionMeta}>
           <span className={styles.difficultyLabel}>【难度】</span>
-          <RichContent content={question.difficulty} />
+          <div className={styles.metaContent}>
+            <RichContent content={question.difficulty} />
+          </div>
         </div>
       )}
       {question.score && (
         <div className={styles.questionMeta}>
           <span className={styles.scoreLabel}>【分值】</span>
-          <RichContent content={question.score} />
+          <div className={styles.metaContent}>
+            <RichContent content={question.score} />
+          </div>
         </div>
       )}
       {question.answer && (
         <div className={styles.questionAnswer}>
           <span className={styles.answerLabel}>【答案】</span>
-          <RichContent content={question.answer} />
+          <div className={styles.metaContent}>
+            <RichContent content={question.answer} />
+          </div>
         </div>
       )}
       {question.analysis && (
         <div className={styles.questionAnalysis}>
           <span className={styles.analysisLabel}>【解析】</span>
-          <RichContent content={question.analysis} />
+          <div className={styles.metaContent}>
+            <RichContent content={question.analysis} />
+          </div>
         </div>
       )}
       {question.subQuestions.length > 0 && (

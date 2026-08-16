@@ -294,65 +294,92 @@
 }
 
 .questionAnswer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin-top: 8px;
   padding: 8px 12px;
   background: #f0f9eb;
   border-radius: 4px;
   font-size: 13px;
+  line-height: 1.6;
 
-  p:last-child {
-    margin-bottom: 0;
+  .answerLabel {
+    flex-shrink: 0;
+    color: #67c23a;
+    font-weight: 600;
+    line-height: inherit;
   }
 }
 
-.answerLabel {
-  color: #67c23a;
-  font-weight: 600;
-}
-
 .questionAnalysis {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin-top: 8px;
   padding: 8px 12px;
   background: #fdf6ec;
   border-radius: 4px;
   font-size: 13px;
+  line-height: 1.6;
 
-  p:last-child {
-    margin-bottom: 0;
+  .analysisLabel {
+    flex-shrink: 0;
+    color: #e6a23c;
+    font-weight: 600;
+    line-height: inherit;
   }
-}
-
-.analysisLabel {
-  color: #e6a23c;
-  font-weight: 600;
 }
 
 // 试题元信息（知识点/难度/分值）
 .questionMeta {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin-top: 8px;
   padding: 8px 12px;
   background: #f4f4f5;
   border-radius: 4px;
   font-size: 13px;
+  line-height: 1.6;
+
+  .knowledgeLabel {
+    flex-shrink: 0;
+    color: #409eff;
+    font-weight: 600;
+    line-height: inherit;
+  }
+
+  .difficultyLabel {
+    flex-shrink: 0;
+    color: #f56c6c;
+    font-weight: 600;
+    line-height: inherit;
+  }
+
+  .scoreLabel {
+    flex-shrink: 0;
+    color: #909399;
+    font-weight: 600;
+    line-height: inherit;
+  }
+}
+
+.metaContent {
+  flex: 1;
+  min-width: 0;
+
+  p:first-child {
+    margin-top: 0;
+  }
 
   p:last-child {
     margin-bottom: 0;
   }
-}
 
-.knowledgeLabel {
-  color: #409eff;
-  font-weight: 600;
-}
-
-.difficultyLabel {
-  color: #f56c6c;
-  font-weight: 600;
-}
-
-.scoreLabel {
-  color: #909399;
-  font-weight: 600;
+  :global(.content-container) {
+    margin: 0;
+  }
 }
 
 .subQuestions {
@@ -699,6 +726,29 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
+}
+
+.imageLabelRow {
+  .questionAnswer,
+  .questionAnalysis,
+  .questionMeta {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 8px 12px;
+
+    .answerLabel,
+    .analysisLabel,
+    .knowledgeLabel,
+    .difficultyLabel,
+    .scoreLabel {
+      flex-shrink: 0;
+      line-height: 1.4;
+      display: inline-block;
+      margin-bottom: 0;
+    }
+  }
 }
 
 .cropRegionList {

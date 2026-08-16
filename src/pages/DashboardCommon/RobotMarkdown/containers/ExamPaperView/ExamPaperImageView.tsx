@@ -21,13 +21,15 @@ interface IQuestionRegion {
   contentIds: (string | number)[];
 }
 
-/** 题目某一角色（题干/选项/答案/解析）对应的裁剪分组 */
+/** 题目某一角色（题干/选项/答案/解析/知识点/难度/分值）对应的裁剪分组 */
 interface IQuestionImageSections {
   stem: IQuestionRegion[];
   options: { label: string; regions: IQuestionRegion[] }[];
   answer: IQuestionRegion[];
   analysis: IQuestionRegion[];
-  meta: IQuestionRegion[];
+  knowledge: IQuestionRegion[];
+  difficulty: IQuestionRegion[];
+  score: IQuestionRegion[];
 }
 
 interface IPageSource {
@@ -448,7 +450,7 @@ const blocksToRegions = (result: any, blocks: IBlock[]): IQuestionRegion[] => {
 
 /**
  * 计算题目的裁剪分组：
- * - 题干/选项/答案/解析/元信息分别归类到对应字段；
+ * - 题干/选项/答案/解析/知识点/难度/分值分别归类到对应字段；
  * - 无分组信息的旧数据退化为全部块作为题干。
  */
 const getQuestionImageSections = (result: any, question: IExamPaperQuestion): IQuestionImageSections => {
@@ -461,7 +463,9 @@ const getQuestionImageSections = (result: any, question: IExamPaperQuestion): IQ
       options: [],
       answer: [],
       analysis: [],
-      meta: [],
+      knowledge: [],
+      difficulty: [],
+      score: [],
     };
   }
 
@@ -475,16 +479,11 @@ const getQuestionImageSections = (result: any, question: IExamPaperQuestion): IQ
     .filter((item) => item.regions.length > 0);
   const answer = blocksToRegions(result, getBlocksByIds(result, groups.answer));
   const analysis = blocksToRegions(result, getBlocksByIds(result, groups.analysis));
+  const knowledge = blocksToRegions(result, getBlocksByIds(result, groups.knowledge || []));
+  const difficulty = blocksToRegions(result, getBlocksByIds(result, groups.difficulty || []));
+  const score = blocksToRegions(result, getBlocksByIds(result, groups.score || []));
 
-  // 元信息（知识点/难度/分值）
-  const metaBlocks = [
-    ...(groups.knowledge || []),
-    ...(groups.difficulty || []),
-    ...(groups.score || []),
-  ];
-  const meta = blocksToRegions(result, getBlocksByIds(result, metaBlocks));
-
-  return { stem, options, answer, analysis, meta };
+  return { stem, options, answer, analysis, knowledge, difficulty, score };
 };
 
 /** 加载图片为 HTMLImageElement */
@@ -830,7 +829,9 @@ const ImageQuestionItem: React.FC<{
     sections.options.length > 0 ||
     sections.answer.length > 0 ||
     sections.analysis.length > 0 ||
-    sections.meta.length > 0;
+    sections.knowledge.length > 0 ||
+    sections.difficulty.length > 0 ||
+    sections.score.length > 0;
 
   const handleDeletePiece = (e: React.MouseEvent, contentIds: (string | number)[]) => {
     e.stopPropagation();
@@ -926,38 +927,72 @@ const ImageQuestionItem: React.FC<{
             </div>
           )}
 
-          {/* 答案 */}
+          {/* 答案（标签与图片同一行显示） */}
           {sections.answer.length > 0 && (
-            <div className={styles.questionAnswer}>
-              <span className={styles.answerLabel}>【答案】</span>
-              <div className={styles.imageGroupContent}>
-                {sections.answer.map((region, rIdx) =>
-                  renderCropPiece(region, `ans-${region.pageId}-${rIdx}`),
-                )}
+            <div className={styles.imageLabelRow}>
+              <div className={styles.questionAnswer}>
+                <span className={styles.answerLabel}>【答案】</span>
+                <div className={styles.imageGroupContent}>
+                  {sections.answer.map((region, rIdx) =>
+                    renderCropPiece(region, `ans-${region.pageId}-${rIdx}`),
+                  )}
+                </div>
               </div>
             </div>
           )}
 
-          {/* 解析 */}
+          {/* 解析（标签与图片同一行显示） */}
           {sections.analysis.length > 0 && (
-            <div className={styles.questionAnalysis}>
-              <span className={styles.analysisLabel}>【解析】</span>
-              <div className={styles.imageGroupContent}>
-                {sections.analysis.map((region, rIdx) =>
-                  renderCropPiece(region, `analysis-${region.pageId}-${rIdx}`),
-                )}
+            <div className={styles.imageLabelRow}>
+              <div className={styles.questionAnalysis}>
+                <span className={styles.analysisLabel}>【解析】</span>
+                <div className={styles.imageGroupContent}>
+                  {sections.analysis.map((region, rIdx) =>
+                    renderCropPiece(region, `analysis-${region.pageId}-${rIdx}`),
+                  )}
+                </div>
               </div>
             </div>
           )}
 
-          {/* 元信息 */}
-          {sections.meta.length > 0 && (
-            <div className={styles.questionMeta}>
-              <span className={styles.knowledgeLabel}>【元信息】</span>
-              <div className={styles.imageGroupContent}>
-                {sections.meta.map((region, rIdx) =>
-                  renderCropPiece(region, `meta-${region.pageId}-${rIdx}`),
-                )}
+          {/* 知识点（独立标签与图片同一行显示） */}
+          {sections.knowledge.length > 0 && (
+            <div className={styles.imageLabelRow}>
+              <div className={styles.questionMeta}>
+                <span className={styles.knowledgeLabel}>【知识点】</span>
+                <div className={styles.imageGroupContent}>
+                  {sections.knowledge.map((region, rIdx) =>
+                    renderCropPiece(region, `knowledge-${region.pageId}-${rIdx}`),
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 难度（独立标签与图片同一行显示） */}
+          {sections.difficulty.length > 0 && (
+            <div className={styles.imageLabelRow}>
+              <div className={styles.questionMeta}>
+                <span className={styles.difficultyLabel}>【难度】</span>
+                <div className={styles.imageGroupContent}>
+                  {sections.difficulty.map((region, rIdx) =>
+                    renderCropPiece(region, `difficulty-${region.pageId}-${rIdx}`),
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 分值（独立标签与图片同一行显示） */}
+          {sections.score.length > 0 && (
+            <div className={styles.imageLabelRow}>
+              <div className={styles.questionMeta}>
+                <span className={styles.scoreLabel}>【分值】</span>
+                <div className={styles.imageGroupContent}>
+                  {sections.score.map((region, rIdx) =>
+                    renderCropPiece(region, `score-${region.pageId}-${rIdx}`),
+                  )}
+                </div>
               </div>
             </div>
           )}
