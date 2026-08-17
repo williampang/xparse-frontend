@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Spin, Tag, Empty, Button, Input, message } from 'antd';
 import { downloadOcrImg } from '@/services/robot';
 import { addDataToURL } from '@/utils';
-import type { IExamPaperData, IExamPaperQuestion } from '../../data.d';
+import type { IExamPaperData, IExamPaperImageSlotField, IExamPaperQuestion } from '../../data.d';
 import { clearAllActive, highlightLeftViewRects } from './helpers';
 import { storeContainer } from '../../store';
 import styles from './index.less';
@@ -13,6 +13,27 @@ interface IProps {
   isPdf?: boolean;
   onAddOption?: (sectionIdx: number, questionIdx: number) => void;
   onRenameOption?: (sectionIdx: number, questionIdx: number, optionIdx: number, newLabel: string) => void;
+  onRemovePiece?: (
+    sectionIdx: number,
+    questionIdx: number,
+    field: IExamPaperImageSlotField,
+    optionIdx: number | null,
+    contentIds: (string | number)[],
+  ) => void;
+  onAddImageToSlot?: (
+    sectionIdx: number,
+    questionIdx: number,
+    field: IExamPaperImageSlotField,
+    optionIdx: number | null,
+  ) => boolean;
+}
+
+/** 槽位选中状态（题目的题干/选项/答案/解析等） */
+interface ISlotSelection {
+  sectionIdx: number;
+  questionIdx: number;
+  field: IExamPaperImageSlotField;
+  optionIdx: number | null;
 }
 
 /** 题目在原图中的区域（页面坐标系） */
@@ -884,9 +905,30 @@ const ImageQuestionItem: React.FC<{
   sectionIdx?: number;
   questionIdx?: number;
   selected?: boolean;
+  /** 属于本题的槽位选中信息（父组件已过滤），非空表示本题该槽位被选中 */
+  slotSelection?: { field: IExamPaperImageSlotField; optionIdx: number | null } | null;
   onSelect?: (key: string) => void;
   onAddOption?: (sectionIdx: number, questionIdx: number) => void;
   onRenameOption?: (sectionIdx: number, questionIdx: number, optionIdx: number, newLabel: string) => void;
+  onSlotSelect?: (
+    sectionIdx: number,
+    questionIdx: number,
+    field: IExamPaperImageSlotField,
+    optionIdx: number | null,
+  ) => void;
+  onRemovePiece?: (
+    sectionIdx: number,
+    questionIdx: number,
+    field: IExamPaperImageSlotField,
+    optionIdx: number | null,
+    contentIds: (string | number)[],
+  ) => void;
+  onAddImageToSlot?: (
+    sectionIdx: number,
+    questionIdx: number,
+    field: IExamPaperImageSlotField,
+    optionIdx: number | null,
+  ) => boolean;
 }> = ({
   result,
   question,
@@ -895,11 +937,14 @@ const ImageQuestionItem: React.FC<{
   sectionIdx,
   questionIdx,
   selected = false,
+  slotSelection = null,
   onSelect,
   onAddOption,
   onRenameOption,
+  onSlotSelect,
+  onRemovePiece,
+  onAddImageToSlot,
 }) => {
-  const { deleteBlock, undoDeleteBlock } = storeContainer.useContainer();
   const sections = useMemo(() => getQuestionImageSections(result, question), [result, question]);
   const questionContentId = question.contentIds.length > 0 ? question.contentIds[0] : undefined;
   // 无 contentGroups 的旧数据：用 question.options 兜底渲染占位行
@@ -920,31 +965,40 @@ const ImageQuestionItem: React.FC<{
     sections.difficulty.length > 0 ||
     sections.score.length > 0;
 
-  const handleDeletePiece = (e: React.MouseEvent, contentIds: (string | number)[]) => {
-    e.stopPropagation();
-    clearAllActive(document.documentElement, styles.active);
-    deleteBlock?.(contentIds);
-    message.success(
-      <span>
-        已删除图片{' '}
-        <a
-          style={{ marginLeft: 8, color: '#1a66ff', textDecoration: 'underline', cursor: 'pointer' }}
-          onClick={(ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
-            if (undoDeleteBlock?.()) {
-              message.success('已恢复删除的图片');
-            }
-          }}
-        >
-          撤销
-        </a>
-      </span>,
-      4,
-    );
+  // 槽位容器类名：子题目（无 sectionIdx）不可选中；选中的槽位展示高亮样式
+  const slotClassName = (field: IExamPaperImageSlotField, optionIdx: number | null) => {
+    if (sectionIdx === undefined || questionIdx === undefined) return '';
+    const isSelected =
+      !!slotSelection && slotSelection.field === field && slotSelection.optionIdx === optionIdx;
+    return `${styles.imageSlotSelectable} ${isSelected ? styles.imageSlotSelected : ''}`;
   };
 
-  const renderCropPiece = (region: IQuestionRegion, key: string) => (
+  // 槽位点击：阻止冒泡（避免触发外层委托的选题逻辑），标记该槽位选中并同步选中本题
+  const handleSlotClick =
+    (field: IExamPaperImageSlotField, optionIdx: number | null) => (e: React.MouseEvent) => {
+      if (sectionIdx === undefined || questionIdx === undefined) return;
+      e.stopPropagation();
+      onSlotSelect?.(sectionIdx, questionIdx, field, optionIdx);
+    };
+
+  // 图块 ×：仅移除图片与本题槽位的关联（左侧整图预览的识别框保留）
+  const handleDeletePiece = (
+    e: React.MouseEvent,
+    field: IExamPaperImageSlotField,
+    optionIdx: number | null,
+    contentIds: (string | number)[],
+  ) => {
+    e.stopPropagation();
+    if (sectionIdx === undefined || questionIdx === undefined) return;
+    onRemovePiece?.(sectionIdx, questionIdx, field, optionIdx, contentIds);
+  };
+
+  const renderCropPiece = (
+    region: IQuestionRegion,
+    key: string,
+    field: IExamPaperImageSlotField,
+    optionIdx: number | null,
+  ) => (
     <div
       key={key}
       className={styles.imageCropPiece}
@@ -963,14 +1017,16 @@ const ImageQuestionItem: React.FC<{
       }}
       title={`第 ${region.pageNumber} 页 · 点击在左侧视图中定位`}
     >
-      <button
-        type="button"
-        className={styles.cropDeleteBtn}
-        onClick={(e) => handleDeletePiece(e, region.contentIds)}
-        title="删除此图片"
-      >
-        ×
-      </button>
+      {sectionIdx !== undefined && questionIdx !== undefined && onRemovePiece && (
+        <button
+          type="button"
+          className={styles.cropDeleteBtn}
+          onClick={(e) => handleDeletePiece(e, field, optionIdx, region.contentIds)}
+          title="从本题移除此图片（左侧识别框保留）"
+        >
+          ×
+        </button>
+      )}
       <CropRegionImage
         key={`${region.pageId}_${region.bbox.x}_${region.bbox.y}_${region.bbox.w}_${region.bbox.h}`}
         result={result}
@@ -984,36 +1040,53 @@ const ImageQuestionItem: React.FC<{
     <div
       className={`${styles.imageQuestionItem} ${selected ? styles.imageQuestionSelected : ''}`}
       data-question-content-ids={question.contentIds.join(',')}
+      // 题目容器不参与 useContentClick 的联动高亮（按钮/槽位等点击会冒泡被误判为
+      // 内容点击，给整题加全局 active 类导致全部图块持续显示选中态与删除按钮）
+      data-active="0"
       data-question-key={
         sectionIdx !== undefined && questionIdx !== undefined ? `${sectionIdx}-${questionIdx}` : undefined
       }
       data-content-id={questionContentId}
     >
-      {/* 选中题目后在右上角展示添加选项按钮 */}
+      {/* 选中题目后右上角操作按钮组：添加选项；本题有槽位选中时另显示添加图片 */}
       {selected && sectionIdx !== undefined && questionIdx !== undefined && (
-        <Button
-          size="small"
-          type="dashed"
-          className={styles.imageAddOptionBtn}
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddOption?.(sectionIdx, questionIdx);
-          }}
-        >
-          + 添加选项
-        </Button>
+        <div className={styles.imageTopActions} onClick={(e) => e.stopPropagation()}>
+          <Button
+            size="small"
+            type="dashed"
+            className={styles.imageAddOptionBtn}
+            onClick={() => onAddOption?.(sectionIdx, questionIdx)}
+          >
+            + 添加选项
+          </Button>
+          {slotSelection && (
+            <Button
+              size="small"
+              type="dashed"
+              className={styles.imageAddOptionBtn}
+              onClick={() =>
+                onAddImageToSlot?.(sectionIdx, questionIdx, slotSelection.field, slotSelection.optionIdx)
+              }
+            >
+              + 添加图片
+            </Button>
+          )}
+        </div>
       )}
       {!hasAnyRegion && !optionList.length ? (
         <div className={styles.cropFailed}>该题目暂无图片定位信息</div>
       ) : (
         <div className={styles.imageQuestionBody}>
-          {/* 题干（含题号在同一行） */}
-          <div className={styles.imageQuestionStemRow}>
+          {/* 题干（含题号在同一行），点击选中题干槽位 */}
+          <div
+            className={`${styles.imageQuestionStemRow} ${slotClassName('stem', null)}`}
+            onClick={handleSlotClick('stem', null)}
+          >
             {showIndex && <span className={styles.questionIndex}>{question.index}.</span>}
             {sections.stem.length > 0 && (
               <div className={styles.imageQuestionStem}>
                 {sections.stem.map((region, rIdx) =>
-                  renderCropPiece(region, `stem-${region.pageId}-${region.bbox.x}-${region.bbox.y}-${rIdx}`),
+                  renderCropPiece(region, `stem-${region.pageId}-${region.bbox.x}-${region.bbox.y}-${rIdx}`, 'stem', null),
                 )}
               </div>
             )}
@@ -1023,7 +1096,11 @@ const ImageQuestionItem: React.FC<{
           {optionList.length > 0 && (
             <div className={styles.imageQuestionOptions}>
               {optionList.map((opt, optIdx) => (
-                <div key={`opt-${optIdx}-${opt.label}`} className={styles.imageOptionItem}>
+                <div
+                  key={`opt-${optIdx}-${opt.label}`}
+                  className={`${styles.imageOptionItem} ${slotClassName('option', optIdx)}`}
+                  onClick={handleSlotClick('option', optIdx)}
+                >
                   <EditableOptionLabel
                     label={opt.label}
                     onRename={(newLabel) => {
@@ -1035,7 +1112,7 @@ const ImageQuestionItem: React.FC<{
                   <div className={styles.imageOptionContent}>
                     {opt.regions.length > 0 ? (
                       opt.regions.map((region, rIdx) =>
-                        renderCropPiece(region, `opt-${opt.label}-${region.pageId}-${rIdx}`),
+                        renderCropPiece(region, `opt-${opt.label}-${region.pageId}-${rIdx}`, 'option', optIdx),
                       )
                     ) : (
                       <div className={styles.imageOptionPlaceholder}>暂无原图区域</div>
@@ -1046,70 +1123,85 @@ const ImageQuestionItem: React.FC<{
             </div>
           )}
 
-          {/* 答案（标签与图片同一行显示） */}
+          {/* 答案（标签与图片同一行显示），点击选中答案槽位 */}
           {sections.answer.length > 0 && (
-            <div className={styles.imageLabelRow}>
+            <div
+              className={`${styles.imageLabelRow} ${slotClassName('answer', null)}`}
+              onClick={handleSlotClick('answer', null)}
+            >
               <div className={styles.questionAnswer}>
                 <span className={styles.answerLabel}>【答案】</span>
                 <div className={styles.imageGroupContent}>
                   {sections.answer.map((region, rIdx) =>
-                    renderCropPiece(region, `ans-${region.pageId}-${rIdx}`),
+                    renderCropPiece(region, `ans-${region.pageId}-${rIdx}`, 'answer', null),
                   )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* 解析（标签与图片同一行显示） */}
+          {/* 解析（标签与图片同一行显示），点击选中解析槽位 */}
           {sections.analysis.length > 0 && (
-            <div className={styles.imageLabelRow}>
+            <div
+              className={`${styles.imageLabelRow} ${slotClassName('analysis', null)}`}
+              onClick={handleSlotClick('analysis', null)}
+            >
               <div className={styles.questionAnalysis}>
                 <span className={styles.analysisLabel}>【解析】</span>
                 <div className={styles.imageGroupContent}>
                   {sections.analysis.map((region, rIdx) =>
-                    renderCropPiece(region, `analysis-${region.pageId}-${rIdx}`),
+                    renderCropPiece(region, `analysis-${region.pageId}-${rIdx}`, 'analysis', null),
                   )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* 知识点（独立标签与图片同一行显示） */}
+          {/* 知识点（独立标签与图片同一行显示），点击选中知识点槽位 */}
           {sections.knowledge.length > 0 && (
-            <div className={styles.imageLabelRow}>
+            <div
+              className={`${styles.imageLabelRow} ${slotClassName('knowledge', null)}`}
+              onClick={handleSlotClick('knowledge', null)}
+            >
               <div className={styles.questionMeta}>
                 <span className={styles.knowledgeLabel}>【知识点】</span>
                 <div className={styles.imageGroupContent}>
                   {sections.knowledge.map((region, rIdx) =>
-                    renderCropPiece(region, `knowledge-${region.pageId}-${rIdx}`),
+                    renderCropPiece(region, `knowledge-${region.pageId}-${rIdx}`, 'knowledge', null),
                   )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* 难度（独立标签与图片同一行显示） */}
+          {/* 难度（独立标签与图片同一行显示），点击选中难度槽位 */}
           {sections.difficulty.length > 0 && (
-            <div className={styles.imageLabelRow}>
+            <div
+              className={`${styles.imageLabelRow} ${slotClassName('difficulty', null)}`}
+              onClick={handleSlotClick('difficulty', null)}
+            >
               <div className={styles.questionMeta}>
                 <span className={styles.difficultyLabel}>【难度】</span>
                 <div className={styles.imageGroupContent}>
                   {sections.difficulty.map((region, rIdx) =>
-                    renderCropPiece(region, `difficulty-${region.pageId}-${rIdx}`),
+                    renderCropPiece(region, `difficulty-${region.pageId}-${rIdx}`, 'difficulty', null),
                   )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* 分值（独立标签与图片同一行显示） */}
+          {/* 分值（独立标签与图片同一行显示），点击选中分值槽位 */}
           {sections.score.length > 0 && (
-            <div className={styles.imageLabelRow}>
+            <div
+              className={`${styles.imageLabelRow} ${slotClassName('score', null)}`}
+              onClick={handleSlotClick('score', null)}
+            >
               <div className={styles.questionMeta}>
                 <span className={styles.scoreLabel}>【分值】</span>
                 <div className={styles.imageGroupContent}>
                   {sections.score.map((region, rIdx) =>
-                    renderCropPiece(region, `score-${region.pageId}-${rIdx}`),
+                    renderCropPiece(region, `score-${region.pageId}-${rIdx}`, 'score', null),
                   )}
                 </div>
               </div>
@@ -1137,18 +1229,57 @@ const ExamPaperImageView: React.FC<IProps> = ({
   isPdf = false,
   onAddOption,
   onRenameOption,
+  onRemovePiece,
+  onAddImageToSlot,
 }) => {
   const { undoDeleteBlock, canUndoDelete } = storeContainer.useContainer();
 
-  // 当前选中的题目 key（`${sectionIdx}-${questionIdx}`），选中后展示右上角操作按钮
+  // 当前选中的题目 key（`${sectionIdx}-${questionIdx}`），选中后展示右上角操作按钮组
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  // 当前选中的槽位（题干/选项/答案/解析等），选中后展示「添加图片」按钮
+  const [selectedSlot, setSelectedSlot] = useState<ISlotSelection | null>(null);
 
-  // 点击事件委托：命中题目则选中，点击空白处则清除选中态；
+  // 槽位选中：同步选中所属题目，使右上角按钮组可见
+  const handleSlotSelect = useCallback(
+    (sectionIdx: number, questionIdx: number, field: IExamPaperImageSlotField, optionIdx: number | null) => {
+      setSelectedKey(`${sectionIdx}-${questionIdx}`);
+      setSelectedSlot({ sectionIdx, questionIdx, field, optionIdx });
+    },
+    [],
+  );
+
+  // 添加图片到槽位：委托父组件回调（读取左侧选中识别框）；成功后清除槽位选中与两侧残留选中态
+  const handleAddImageToSlot = useCallback(
+    (
+      sectionIdx: number,
+      questionIdx: number,
+      field: IExamPaperImageSlotField,
+      optionIdx: number | null,
+    ): boolean => {
+      const ok = onAddImageToSlot?.(sectionIdx, questionIdx, field, optionIdx) ?? false;
+      if (ok) {
+        setSelectedSlot(null);
+        // 用户常通过点击图块定位并选中左侧识别框，该图块的 styles.active 是命令式加上的，
+        // 重渲染时 React 复用 DOM 不会清除，添加完成后若不重置会一直显示选中态与红色删除按钮
+        clearAllActive(document.documentElement, styles.active);
+      }
+      return ok;
+    },
+    [onAddImageToSlot],
+  );
+
+  // 选中题目（图块点击/委托点击）：同步清除槽位选中（槽位属于特定题目，避免残留旧题槽位）
+  const handleSelectQuestion = useCallback((key: string | null) => {
+    setSelectedKey(key);
+    setSelectedSlot(null);
+  }, []);
+
+  // 点击事件委托：命中题目则选中，点击空白处则清除选中态（槽位点击已 stopPropagation 不走到这里）；
   // 与外层 ExamPaperView 的左侧联动高亮逻辑各自独立，不改变其行为
   const handleContainerClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     const questionDom = target.closest('[data-question-key]');
-    setSelectedKey(questionDom?.getAttribute('data-question-key') || null);
+    handleSelectQuestion(questionDom?.getAttribute('data-question-key') || null);
   };
 
   // 支持 Ctrl+Z / Cmd+Z 快捷撤销删除
@@ -1176,7 +1307,7 @@ const ExamPaperImageView: React.FC<IProps> = ({
   return (
     <div className={styles.examPaperImageContainer} onClick={handleContainerClick}>
       <div className={styles.imageModeTip}>
-        图片预览按题目展示其在原始文档中的截图与坐标位置，点击可在左侧视图中定位；在左侧选中单个识别框后可拖拽移动或调整大小，右侧图片将同步更新。选中题目后可添加选项，点击选项标签可修改选项名。
+        图片预览按题目展示其在原始文档中的截图与坐标位置，点击可在左侧视图中定位；在左侧选中单个识别框后可拖拽移动或调整大小，右侧图片将同步更新。图块上的 × 仅将图片从本题移除（左侧识别框保留）；选中题目后可添加选项、点击选项标签可修改选项名；选中题干/选项/答案/解析等槽位后，在左侧视图选中识别框，点右上角「添加图片」即可加入该槽位。
       </div>
       <div className={styles.paperSections}>
         {data.sections.map((section, idx) => (
@@ -1188,6 +1319,11 @@ const ExamPaperImageView: React.FC<IProps> = ({
             <div className={styles.sectionQuestions}>
               {section.questions.map((q, qIdx) => {
                 const qKey = `${idx}-${qIdx}`;
+                // 仅当槽位属于本题时下发选中信息
+                const qSlot =
+                  selectedSlot && selectedSlot.sectionIdx === idx && selectedSlot.questionIdx === qIdx
+                    ? { field: selectedSlot.field, optionIdx: selectedSlot.optionIdx }
+                    : null;
                 return (
                   <ImageQuestionItem
                     key={qIdx}
@@ -1197,9 +1333,13 @@ const ExamPaperImageView: React.FC<IProps> = ({
                     sectionIdx={idx}
                     questionIdx={qIdx}
                     selected={selectedKey === qKey}
-                    onSelect={setSelectedKey}
+                    slotSelection={qSlot}
+                    onSelect={handleSelectQuestion}
                     onAddOption={onAddOption}
                     onRenameOption={onRenameOption}
+                    onSlotSelect={handleSlotSelect}
+                    onRemovePiece={onRemovePiece}
+                    onAddImageToSlot={handleAddImageToSlot}
                   />
                 );
               })}

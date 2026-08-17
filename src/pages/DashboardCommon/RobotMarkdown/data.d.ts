@@ -112,6 +112,16 @@ export interface IExamPaperContentGroups {
   score?: (number | string)[]; // 分值
 }
 
+/** 题目内图片块的槽位类别（图片预览中按槽位增删图片块关联） */
+export type IExamPaperImageSlotField =
+  | 'stem'
+  | 'option'
+  | 'answer'
+  | 'analysis'
+  | 'knowledge'
+  | 'difficulty'
+  | 'score';
+
 export interface IExamPaperQuestion {
   index: number; // 题号
   type: number | string; // 题目类型

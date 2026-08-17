@@ -1,7 +1,13 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect, useLayoutEffect } from 'react';
 import classNames from 'classnames';
 import { Tag, Empty, Input, Button, Tooltip, message } from 'antd';
-import type { IExamPaperData, IExamPaperQuestion, IExamPaperSection } from '../../data.d';
+import type {
+  IExamPaperContentGroups,
+  IExamPaperData,
+  IExamPaperImageSlotField,
+  IExamPaperQuestion,
+  IExamPaperSection,
+} from '../../data.d';
 import { formatExamPaper } from '../../utils';
 import MarkdownRender from '../../MarkdownRender/MarkdownRender';
 import useMathJaxLoad, { useRefreshMath } from '../../MathJaxRender/useMathJaxLoad';
@@ -81,6 +87,66 @@ const buildEditedQuestions = (data: IExamPaperData): any[] => {
     }
   }
   return allEditedQuestions;
+};
+
+/**
+ * 定位题目 contentGroups 中指定槽位的 contentIds 数组；缺失时补齐
+ * （contentGroups 整体缺失时初始化，可选数组/选项 contentIds 缺失时创建）
+ */
+const getSlotArray = (
+  question: IExamPaperQuestion,
+  field: IExamPaperImageSlotField,
+  optionIdx: number | null,
+): (number | string)[] | null => {
+  if (!question.contentGroups) {
+    question.contentGroups = { stem: [], options: [], answer: [], analysis: [] };
+  }
+  const groups = question.contentGroups;
+  switch (field) {
+    case 'stem':
+      return groups.stem;
+    case 'answer':
+      return groups.answer;
+    case 'analysis':
+      return groups.analysis;
+    case 'knowledge':
+      groups.knowledge = groups.knowledge || [];
+      return groups.knowledge;
+    case 'difficulty':
+      groups.difficulty = groups.difficulty || [];
+      return groups.difficulty;
+    case 'score':
+      groups.score = groups.score || [];
+      return groups.score;
+    case 'option': {
+      if (optionIdx === null || optionIdx < 0) return null;
+      if (!groups.options[optionIdx]) {
+        // 旧数据可能无 contentGroups.options，用 question.options 补齐标签
+        const src = question.options[optionIdx];
+        if (!src) return null;
+        groups.options[optionIdx] = { label: src.label, text: src.text || '', contentIds: [] };
+      }
+      const opt = groups.options[optionIdx];
+      opt.contentIds = opt.contentIds || [];
+      return opt.contentIds;
+    }
+    default:
+      return null;
+  }
+};
+
+/** 收集 contentGroups 全部槽位引用的 detail 块 id（字符串化，用于移除后判断残留引用） */
+const collectGroupIds = (groups: IExamPaperContentGroups): Set<string> => {
+  const set = new Set<string>();
+  const add = (ids?: (number | string)[]) => ids?.forEach((id) => set.add(String(id)));
+  add(groups.stem);
+  add(groups.answer);
+  add(groups.analysis);
+  add(groups.knowledge);
+  add(groups.difficulty);
+  add(groups.score);
+  groups.options?.forEach((opt) => add(opt.contentIds));
+  return set;
 };
 
 /** 可编辑的题目项（只有当前选中的题目才渲染 CKEditor） */
@@ -634,6 +700,72 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
     [updateImageQuestion],
   );
 
+  // 图片预览：从题目指定槽位移除图片块关联（仅解除与本题的关联，左侧识别框保留）；
+  // 仅当该块不再被同题其他槽位引用时才从 question.contentIds 移除
+  const handleImageRemovePiece = useCallback(
+    (
+      sectionIdx: number,
+      questionIdx: number,
+      field: IExamPaperImageSlotField,
+      optionIdx: number | null,
+      contentIds: (string | number)[],
+    ) => {
+      const removeIds = contentIds.map(String);
+      if (!removeIds.length) return;
+      updateImageQuestion(sectionIdx, questionIdx, (question) => {
+        const slotArr = getSlotArray(question, field, optionIdx);
+        if (slotArr) {
+          for (let i = slotArr.length - 1; i >= 0; i -= 1) {
+            if (removeIds.includes(String(slotArr[i]))) slotArr.splice(i, 1);
+          }
+        }
+        if (question.contentGroups) {
+          const stillReferenced = collectGroupIds(question.contentGroups);
+          question.contentIds = question.contentIds.filter(
+            (id) => !removeIds.includes(String(id)) || stillReferenced.has(String(id)),
+          );
+        }
+      });
+      message.success('已从本题移除图片');
+    },
+    [updateImageQuestion],
+  );
+
+  // 图片预览：把左侧视图当前选中的识别框（polygon.active）复制到题目指定槽位；
+  // 源引用保留，槽位内与 question.contentIds 去重；成功返回 true
+  const handleImageAddToSlot = useCallback(
+    (sectionIdx: number, questionIdx: number, field: IExamPaperImageSlotField, optionIdx: number | null): boolean => {
+      const ids: (string | number)[] = [];
+      document
+        .querySelectorAll<SVGPolygonElement>('#imgContainer polygon.active')
+        .forEach((p) => {
+          const id = p.getAttribute('data-content-id');
+          if (id) ids.push(id);
+        });
+      if (!ids.length) {
+        message.warning('请先在左侧视图中选中要添加的图片');
+        return false;
+      }
+      updateImageQuestion(sectionIdx, questionIdx, (question) => {
+        const slotArr = getSlotArray(question, field, optionIdx);
+        if (!slotArr) return;
+        ids.forEach((id) => {
+          if (!slotArr.some((existing) => String(existing) === String(id))) slotArr.push(id);
+          if (!question.contentIds.some((existing) => String(existing) === String(id))) {
+            question.contentIds.push(id);
+          }
+        });
+      });
+      // 图片已挂入槽位，清除左侧选中态（useRectAdjust 会随之卸载手柄）
+      document
+        .querySelectorAll('#imgContainer polygon.active')
+        .forEach((p) => p.classList.remove('active'));
+      message.success('图片已添加');
+      return true;
+    },
+    [updateImageQuestion],
+  );
+
   // 单道题目点击“保存”：退出编辑态并保存
   const handleSaveQuestion = useCallback(
     (key: string) => {
@@ -915,6 +1047,8 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
           isPdf={isPdf}
           onAddOption={handleImageAddOption}
           onRenameOption={handleImageRenameOption}
+          onRemovePiece={handleImageRemovePiece}
+          onAddImageToSlot={handleImageAddToSlot}
         />
       ) : (
         /* 大题列表 */

@@ -629,12 +629,17 @@
   }
 }
 
-// 选中题目后右上角的添加选项按钮
-.imageAddOptionBtn {
+// 选中题目后右上角的操作按钮组（添加选项/添加图片）
+.imageTopActions {
   position: absolute;
   top: 4px;
   right: 4px;
   z-index: 5;
+  display: flex;
+  gap: 8px;
+}
+
+.imageAddOptionBtn {
   font-size: 12px;
   color: #1a66ff;
   border-color: #adc6ff;
@@ -646,6 +651,25 @@
     border-color: #1a66ff;
     background: #f0f5ff;
   }
+}
+
+// 槽位容器（题干/选项/答案/解析等）：hover 显示浅色虚线提示可选中
+.imageSlotSelectable {
+  border: 1px dashed transparent;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #adc6ff;
+    background: #fafcff;
+  }
+}
+
+// 槽位选中态：蓝色虚线边框 + 浅色背景，与题目选中态区分
+.imageSlotSelected,
+.imageSlotSelected:hover {
+  border-color: #1a66ff;
+  background: #f0f5ff;
 }
 
 .imageQuestionBody {
