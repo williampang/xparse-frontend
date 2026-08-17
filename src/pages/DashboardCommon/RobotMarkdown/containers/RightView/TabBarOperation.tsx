@@ -54,29 +54,11 @@ const TabBarOperation = (props: TabBarOperationProps) => {
     resultJson,
     markdownMode,
     examPaperMode,
-    setExamPaperMode,
-    saveResultJson,
     examPaperPreviewFormat,
     setExamPaperPreviewFormat,
     canUndoDelete,
     undoDeleteBlock,
   } = storeContainer.useContainer();
-
-  const [examPaperSaveLoading, setExamPaperSaveLoading] = useState(false);
-
-  // 试卷编辑模式：保存
-  const handleExamPaperSave = async () => {
-    setExamPaperSaveLoading(true);
-    try {
-      // 触发 ExamPaperView 内部的保存逻辑（通过自定义事件）
-      document.dispatchEvent(new CustomEvent('exam-paper-save'));
-      await saveResultJson?.(false);
-      setExamPaperMode('view');
-    } catch (error) {
-      console.error(error);
-    }
-    setExamPaperSaveLoading(false);
-  };
 
   const { Robot } = useSelector((state: ConnectState) => ({
     Robot: state.Robot,
@@ -246,26 +228,6 @@ const TabBarOperation = (props: TabBarOperationProps) => {
           导出结果
         </Button>
       )}
-
-      {resultType === ResultType.exam_paper && showEdit &&
-        (examPaperMode === 'view' ? (
-          <Button
-            type="text"
-            className={styles['tab-item']}
-            onClick={() => setExamPaperMode('edit')}
-          >
-            <EditIcon />
-          </Button>
-        ) : (
-          <Button
-            loading={examPaperSaveLoading}
-            onClick={handleExamPaperSave}
-            className={classNames(styles['tab-item'], styles['tab-text'])}
-            icon={<EditIcon />}
-          >
-            保存
-          </Button>
-        ))}
 
       {resultType !== ResultType.exam_paper && showEdit &&
         (markdownMode === 'view' ? (

@@ -205,6 +205,20 @@ const EditableQuestionItem: React.FC<{
       data-content-id={questionContentId}
       onClick={handleClick}
     >
+      {/* 编辑态：右上角“保存”按钮（替代选中态的“编辑”按钮位置） */}
+      {isEditing && (
+        <div className={styles.questionTopActions}>
+          <Button
+            size="small"
+            type="primary"
+            className={styles.saveQuestionBtn}
+            onClick={handleSaveClick}
+          >
+            保存
+          </Button>
+        </div>
+      )}
+
       {isEditing ? (
         <>
           <div className={styles.questionHeader}>
@@ -222,14 +236,6 @@ const EditableQuestionItem: React.FC<{
                 插入图片
               </Button>
             </Tooltip>
-            <Button
-              size="small"
-              type="primary"
-              className={styles.saveQuestionBtn}
-              onClick={handleSaveClick}
-            >
-              保存
-            </Button>
           </div>
 
           {/* 题干富文本编辑 */}
@@ -408,19 +414,36 @@ const EditableQuestionItem: React.FC<{
 
 // ==================== 查看模式组件 ====================
 
-/** 渲染单个题目（只读） */
-const QuestionItem: React.FC<{ question: IExamPaperQuestion; showIndex?: boolean }> = ({
-  question,
-  showIndex = true,
-}) => {
+/** 渲染单个题目（只读）；选中时右上角出现“编辑”按钮 */
+const QuestionItem: React.FC<{
+  question: IExamPaperQuestion;
+  showIndex?: boolean;
+  selected?: boolean;
+  onSelect?: () => void;
+  onEdit?: () => void;
+}> = ({ question, showIndex = true, selected = false, onSelect, onEdit }) => {
   const questionContentId = question.contentIds.length > 0 ? question.contentIds[0] : undefined;
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit?.();
+  };
 
   return (
     <div
-      className={styles.questionItem}
+      className={classNames(styles.questionItem, selected && styles.questionSelected)}
       data-question-content-ids={question.contentIds.join(',')}
       data-content-id={questionContentId}
+      onClick={onSelect}
     >
+      {/* 选中态：右上角“编辑”按钮 */}
+      {onEdit && selected && (
+        <div className={styles.questionTopActions}>
+          <Button size="small" className={styles.questionEditBtn} onClick={handleEditClick}>
+            编辑
+          </Button>
+        </div>
+      )}
       {/* 只读模式：渲染内容 */}
       <div className={styles.questionStemRow}>
         {showIndex && <span className={styles.questionIndex}>{question.index}.</span>}
@@ -496,10 +519,11 @@ const QuestionItem: React.FC<{ question: IExamPaperQuestion; showIndex?: boolean
 /** 渲染大题（section） */
 const SectionItem: React.FC<{
   section: IExamPaperSection;
-  editMode: boolean;
   sectionIdx: number;
   editingQuestionKey: string | null;
+  selectedQuestionKey: string | null;
   onSelectQuestion: (key: string) => void;
+  onStartEdit: (key: string) => void;
   onSaveQuestion: (key: string) => void;
   onChange?: (sectionIdx: number, questionIdx: number, field: string, value: any) => void;
   onSplit?: (sectionIdx: number, questionIdx: number) => void;
@@ -507,7 +531,7 @@ const SectionItem: React.FC<{
   onAddOption?: (sectionIdx: number, questionIdx: number) => void;
   onRemoveOption?: (sectionIdx: number, questionIdx: number, optionIdx: number) => void;
   editorRegistry?: EditorRegistry;
-}> = ({ section, editMode, sectionIdx, editingQuestionKey, onSelectQuestion, onSaveQuestion, onChange, onSplit, onInsertImage, onAddOption, onRemoveOption, editorRegistry }) => {
+}> = ({ section, sectionIdx, editingQuestionKey, selectedQuestionKey, onSelectQuestion, onStartEdit, onSaveQuestion, onChange, onSplit, onInsertImage, onAddOption, onRemoveOption, editorRegistry }) => {
   return (
     <div className={styles.sectionItem}>
       <div className={styles.sectionHeader} data-content-id={section.contentId}>
@@ -517,13 +541,13 @@ const SectionItem: React.FC<{
       <div className={styles.sectionQuestions}>
         {section.questions.map((q, idx) => {
           const qKey = `${sectionIdx}-${idx}`;
-          return editMode ? (
+          return editingQuestionKey === qKey ? (
             <EditableQuestionItem
               key={idx}
               question={q}
               sectionIdx={sectionIdx}
               questionIdx={idx}
-              isEditing={editingQuestionKey === qKey}
+              isEditing
               onSelect={onSelectQuestion}
               onSaveQuestion={onSaveQuestion}
               onChange={onChange!}
@@ -534,7 +558,13 @@ const SectionItem: React.FC<{
               editorRegistry={editorRegistry!}
             />
           ) : (
-            <QuestionItem key={idx} question={q} />
+            <QuestionItem
+              key={idx}
+              question={q}
+              selected={selectedQuestionKey === qKey}
+              onSelect={() => onSelectQuestion(qKey)}
+              onEdit={() => onStartEdit(qKey)}
+            />
           );
         })}
       </div>
@@ -550,6 +580,7 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const {
     examPaperMode,
+    setExamPaperMode,
     setResultJson,
     updateBlockPosition,
     examPaperPreviewFormat,
@@ -596,6 +627,9 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
   // 当前正在编辑的题目 key（格式: `${sectionIdx}-${questionIdx}`）
   const [editingQuestionKey, setEditingQuestionKey] = useState<string | null>(null);
 
+  // 当前选中的题目 key（只读态下选中后右上角出现“编辑”按钮）
+  const [selectedQuestionKey, setSelectedQuestionKey] = useState<string | null>(null);
+
   // CKEditor 实例注册表，用于图片插入等操作
   const editorRegistry = useRef<EditorRegistry>(new Map()).current;
 
@@ -612,24 +646,17 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
     return formatExamPaper(result);
   }, [result]);
 
-  // 进入/退出编辑模式时初始化/清除本地数据（只在模式切换时触发，保存导致的 examData 变化不重置）
-  const prevModeRef = useRef(examPaperMode);
+  // 切换解析文件时重置选中态
   useEffect(() => {
-    const prevMode = prevModeRef.current;
-    prevModeRef.current = examPaperMode;
+    setSelectedQuestionKey(null);
+  }, [result]);
 
-    if (examPaperMode === 'edit' && examData && prevMode !== 'edit') {
-      // 刚进入编辑模式：初始化本地数据
-      setEditedData(JSON.parse(JSON.stringify(examData)));
-      setEditingQuestionKey(null);
-      // 编辑模式仅支持 markdown 格式
-      setExamPaperPreviewFormat?.('markdown');
-    } else if (examPaperMode !== 'edit') {
-      // 退出编辑模式：清除
+  // 退出编辑模式（保存完成/切换文件）时清除本地编辑数据
+  useEffect(() => {
+    if (examPaperMode !== 'edit') {
       setEditedData(null);
       setEditingQuestionKey(null);
     }
-    // examData 变化时不重置，避免保存后丢失编辑状态
   }, [examPaperMode]);
 
   // 保存编辑：将 editedData 同步回 resultJson
@@ -798,22 +825,32 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
     (key: string) => {
       handleSave();
       setEditingQuestionKey(null);
+      setExamPaperMode?.('view');
       message.success('已保存');
     },
-    [handleSave],
+    [handleSave, setExamPaperMode],
   );
 
-  // 切换选中其他题目：自动保存当前内容并切换编辑目标
-  const handleSelectQuestion = useCallback(
+  // 选中题目（只读态下点击题目，右上角出现“编辑”按钮）
+  const handleSelectQuestion = useCallback((key: string) => {
+    setSelectedQuestionKey(key);
+  }, []);
+
+  // 点击题目右上角“编辑”进入编辑态；若已有其他题目在编辑，先自动保存并退出其编辑态
+  const handleStartEdit = useCallback(
     (key: string) => {
-      setEditingQuestionKey((prev) => {
-        if (prev && prev !== key) {
-          handleSave();
-        }
-        return key;
-      });
+      if (!examData) return;
+      if (editingQuestionKey && editingQuestionKey !== key) {
+        handleSave();
+      }
+      setEditedData((prev) => prev || JSON.parse(JSON.stringify(examData)));
+      setEditingQuestionKey(key);
+      setSelectedQuestionKey(key);
+      setExamPaperMode?.('edit');
+      // 编辑仅支持 markdown 格式
+      setExamPaperPreviewFormat?.('markdown');
     },
-    [handleSave],
+    [examData, editingQuestionKey, handleSave, setExamPaperMode, setExamPaperPreviewFormat],
   );
 
   const displayData = examPaperMode === 'edit' ? editedData : examData;
@@ -993,15 +1030,6 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [examPaperMode, handleSave]);
 
-  // 监听来自 TabBarOperation/FooterButton 的保存事件
-  useEffect(() => {
-    const handleExamPaperSaveEvent = () => {
-      handleSave();
-    };
-    document.addEventListener('exam-paper-save', handleExamPaperSaveEvent);
-    return () => document.removeEventListener('exam-paper-save', handleExamPaperSaveEvent);
-  }, [handleSave]);
-
   // 查看模式下的点击高亮
   const handleContentClick = useCallback(
     (e: React.MouseEvent) => {
@@ -1021,6 +1049,7 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
       if (!activeTarget) {
         // 点击右侧空白处：取消两侧所有选中/编辑态
         clearAllActive(container, styles.active);
+        setSelectedQuestionKey(null);
         return;
       }
 
@@ -1085,10 +1114,11 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
             <SectionItem
               key={idx}
               section={section}
-              editMode={examPaperMode === 'edit'}
               sectionIdx={idx}
               editingQuestionKey={editingQuestionKey}
+              selectedQuestionKey={selectedQuestionKey}
               onSelectQuestion={handleSelectQuestion}
+              onStartEdit={handleStartEdit}
               onSaveQuestion={handleSaveQuestion}
               onChange={handleFieldChange}
               onSplit={handleSplitQuestion}

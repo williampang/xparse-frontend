@@ -61,7 +61,6 @@ export const FooterButton = ({
     currentFile,
     markdownMode,
     setMarkdownMode,
-    setExamPaperMode,
     shouldSaveMarkdown,
     saveResultJson,
   } = storeContainer.useContainer();

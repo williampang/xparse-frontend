@@ -91,6 +91,7 @@
 }
 
 .questionItem {
+  position: relative;
   padding: 16px;
   border-bottom: 1px solid #f2f3f5;
   border-radius: 4px;
@@ -101,6 +102,43 @@
 
   &:hover {
     background: #fafbfc;
+  }
+}
+
+// 选中态的题目（只读，右上角出现“编辑”按钮）
+.questionSelected {
+  background: #f0f5ff;
+
+  &:hover {
+    background: #f0f5ff;
+  }
+
+  .questionStemRow {
+    padding-right: 56px;
+  }
+}
+
+// 题目右上角操作按钮（选中态的“编辑”/编辑态的“保存”）
+.questionTopActions {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+}
+
+.questionEditBtn {
+  font-size: 12px;
+  color: #1a66ff;
+  border-color: #adc6ff;
+  background: #fff;
+
+  &:hover,
+  &:focus {
+    color: #1a66ff;
+    border-color: #1a66ff;
+    background: #fff;
   }
 }
 
@@ -423,6 +461,11 @@
   &:hover {
     background: #f0f5ff;
   }
+
+  // 为右上角“保存”按钮预留空间，避免与头部右侧按钮重叠
+  .questionHeader {
+    padding-right: 56px;
+  }
 }
 
 // “点击编辑”提示
@@ -452,7 +495,6 @@
 
 .saveQuestionBtn {
   font-size: 12px;
-  margin-left: 8px;
 }
 
 .questionStemEdit,
