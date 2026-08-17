@@ -461,6 +461,71 @@ const useStore = () => {
     });
   };
 
+  // 添加手动创建的图块：追加到 detail_new 末尾（content_id 取新下标），
+  // 并写入左侧对应页的 rects，使其在预览区渲染为可点击/可调整的识别框
+  const addTileBlock = (pageIndex: number, position: number[]): number | null => {
+    const baseDetail =
+      resultJson?.detail_new ||
+      resultJson?.detail ||
+      currentFile?.result?.detail_new ||
+      currentFile?.result?.detail;
+    if (!Array.isArray(baseDetail) || !Array.isArray(position) || position.length < 8) {
+      return null;
+    }
+    const contentId = baseDetail.length;
+    const newPosition = [...position];
+    const newDetailItem = {
+      type: 'image',
+      text: '',
+      content_id: contentId,
+      page_id: pageIndex + 1,
+      position: newPosition,
+      // 标记手动添加的图块，便于区分引擎识别结果
+      _manual_tile: true,
+    };
+
+    setResultJson((pre) => {
+      if (!pre) return pre;
+      const base = pre.detail_new || pre.detail;
+      if (!Array.isArray(base)) return pre;
+      return { ...pre, detail_new: [...cloneDeep(base), newDetailItem] };
+    });
+
+    setCurrentFile((pre: any) => {
+      if (!pre?.result) return pre;
+      const updateDetail = (detail?: any[]) =>
+        Array.isArray(detail) ? [...detail, newDetailItem] : detail;
+      const result = { ...pre.result };
+      result.detail = updateDetail(result.detail);
+      if (result.detail_new) result.detail_new = updateDetail(result.detail_new);
+
+      const appendRects = (rects?: any[][]) => {
+        if (!Array.isArray(rects)) return rects;
+        const copy = rects.map((pageRects) => (Array.isArray(pageRects) ? [...pageRects] : []));
+        while (copy.length <= pageIndex) {
+          copy.push([]);
+        }
+        copy[pageIndex].push({
+          content_id: contentId,
+          uid: contentId,
+          type: 'image',
+          page_id: pageIndex + 1,
+          position: newPosition,
+        });
+        return copy;
+      };
+
+      return {
+        ...pre,
+        result,
+        rects: appendRects(pre.rects),
+        newRects: appendRects(pre.newRects),
+      };
+    });
+
+    return contentId;
+  };
+
   // 撤销最近一次删除
   const undoDeleteBlock = () => {
     if (!deleteHistory.length) return false;
@@ -564,6 +629,7 @@ const useStore = () => {
     updateResultJson,
     updateBlockPosition,
     deleteBlock,
+    addTileBlock,
     undoDeleteBlock,
     canUndoDelete: deleteHistory.length > 0,
     markdownEditorRef,

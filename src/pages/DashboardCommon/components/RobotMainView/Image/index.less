@@ -192,3 +192,30 @@
   text-align: center;
   text-overflow: ellipsis;
 }
+
+// 「添加图块」按钮（试卷预览）：绝对定位到工具栏最左侧（左侧边栏折叠按钮之后），
+// 避免占用 ul 空间把缩放按钮挤入分页浮层（.mainView-pagination，z-index 99）的覆盖区
+.operations-box-static {
+  position: relative;
+}
+
+.addTileBtn {
+  position: absolute;
+  top: 50%;
+  left: 50px;
+  z-index: 100;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  color: @text-color;
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    color: #1a66ff;
+  }
+}

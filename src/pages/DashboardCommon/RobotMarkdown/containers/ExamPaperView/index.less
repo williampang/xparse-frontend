@@ -767,9 +767,29 @@
 }
 
 .imageOptionItem {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 6px;
+}
+
+// 选中选项右上角的删除按钮：红色虚线风格，与添加选项按钮区分
+.imageRemoveOptionBtn {
+  position: absolute;
+  top: -14px;
+  right: 0;
+  z-index: 6;
+  font-size: 12px;
+  color: #ff4d4f;
+  border-color: #ffa39e;
+  background: #fff;
+
+  &:hover,
+  &:focus {
+    color: #ff4d4f;
+    border-color: #ff4d4f;
+    background: #fff1f0;
+  }
 }
 
 // 可编辑选项标签：hover 提示可点击编辑

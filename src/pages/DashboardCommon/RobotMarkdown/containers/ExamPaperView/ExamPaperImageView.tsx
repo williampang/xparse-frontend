@@ -11,7 +11,9 @@ interface IProps {
   result: any;
   data: IExamPaperData;
   isPdf?: boolean;
-  onAddOption?: (sectionIdx: number, questionIdx: number) => void;
+  // afterOptionIdx：当前选中的选项下标（无选中时为 null），新选项插入到该选项之后
+  onAddOption?: (sectionIdx: number, questionIdx: number, afterOptionIdx?: number | null) => void;
+  onRemoveOption?: (sectionIdx: number, questionIdx: number, optionIdx: number) => void;
   onRenameOption?: (sectionIdx: number, questionIdx: number, optionIdx: number, newLabel: string) => void;
   onRemovePiece?: (
     sectionIdx: number,
@@ -908,7 +910,8 @@ const ImageQuestionItem: React.FC<{
   /** 属于本题的槽位选中信息（父组件已过滤），非空表示本题该槽位被选中 */
   slotSelection?: { field: IExamPaperImageSlotField; optionIdx: number | null } | null;
   onSelect?: (key: string) => void;
-  onAddOption?: (sectionIdx: number, questionIdx: number) => void;
+  onAddOption?: (sectionIdx: number, questionIdx: number, afterOptionIdx?: number | null) => void;
+  onRemoveOption?: (sectionIdx: number, questionIdx: number, optionIdx: number) => void;
   onRenameOption?: (sectionIdx: number, questionIdx: number, optionIdx: number, newLabel: string) => void;
   onSlotSelect?: (
     sectionIdx: number,
@@ -940,6 +943,7 @@ const ImageQuestionItem: React.FC<{
   slotSelection = null,
   onSelect,
   onAddOption,
+  onRemoveOption,
   onRenameOption,
   onSlotSelect,
   onRemovePiece,
@@ -1055,7 +1059,18 @@ const ImageQuestionItem: React.FC<{
             size="small"
             type="dashed"
             className={styles.imageAddOptionBtn}
-            onClick={() => onAddOption?.(sectionIdx, questionIdx)}
+            title={
+              slotSelection?.field === 'option'
+                ? '在当前选中的选项后面插入新选项'
+                : '在末尾添加新选项'
+            }
+            onClick={() =>
+              onAddOption?.(
+                sectionIdx,
+                questionIdx,
+                slotSelection?.field === 'option' ? slotSelection.optionIdx : null,
+              )
+            }
           >
             + 添加选项
           </Button>
@@ -1095,12 +1110,30 @@ const ImageQuestionItem: React.FC<{
           {/* 选项：有原图区域的渲染裁剪图，无区域的（新增/无定位）渲染占位行 */}
           {optionList.length > 0 && (
             <div className={styles.imageQuestionOptions}>
-              {optionList.map((opt, optIdx) => (
+              {optionList.map((opt, optIdx) => {
+                const isOptionSelected =
+                  !!slotSelection && slotSelection.field === 'option' && slotSelection.optionIdx === optIdx;
+                return (
                 <div
                   key={`opt-${optIdx}-${opt.label}`}
                   className={`${styles.imageOptionItem} ${slotClassName('option', optIdx)}`}
                   onClick={handleSlotClick('option', optIdx)}
                 >
+                  {/* 选中的选项右上角显示删除按钮，删除后其他选项保持不变 */}
+                  {isOptionSelected && sectionIdx !== undefined && questionIdx !== undefined && (
+                    <Button
+                      size="small"
+                      type="dashed"
+                      className={styles.imageRemoveOptionBtn}
+                      title="删除该选项，其他选项保持不变"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveOption?.(sectionIdx, questionIdx, optIdx);
+                      }}
+                    >
+                      删除选项
+                    </Button>
+                  )}
                   <EditableOptionLabel
                     label={opt.label}
                     onRename={(newLabel) => {
@@ -1119,7 +1152,8 @@ const ImageQuestionItem: React.FC<{
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -1228,6 +1262,7 @@ const ExamPaperImageView: React.FC<IProps> = ({
   data,
   isPdf = false,
   onAddOption,
+  onRemoveOption,
   onRenameOption,
   onRemovePiece,
   onAddImageToSlot,
@@ -1246,6 +1281,15 @@ const ExamPaperImageView: React.FC<IProps> = ({
       setSelectedSlot({ sectionIdx, questionIdx, field, optionIdx });
     },
     [],
+  );
+
+  // 删除选项：委托父组件回调，并清除已不存在选项的槽位选中态（避免高亮指向错误选项）
+  const handleRemoveOption = useCallback(
+    (sectionIdx: number, questionIdx: number, optionIdx: number) => {
+      onRemoveOption?.(sectionIdx, questionIdx, optionIdx);
+      setSelectedSlot(null);
+    },
+    [onRemoveOption],
   );
 
   // 添加图片到槽位：委托父组件回调（读取左侧选中识别框）；成功后清除槽位选中与两侧残留选中态
@@ -1336,6 +1380,7 @@ const ExamPaperImageView: React.FC<IProps> = ({
                     slotSelection={qSlot}
                     onSelect={handleSelectQuestion}
                     onAddOption={onAddOption}
+                    onRemoveOption={handleRemoveOption}
                     onRenameOption={onRenameOption}
                     onSlotSelect={handleSlotSelect}
                     onRemovePiece={onRemovePiece}

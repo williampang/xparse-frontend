@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import classNames from 'classnames';
 import Icon from '@ant-design/icons';
+import { PlusOutlined } from '@ant-design/icons';
 import { Divider } from 'antd';
 import { useLocation, useSelector } from 'umi';
 import type { ConnectState } from '@/models/connect';
@@ -43,6 +44,8 @@ export interface ImageProps
   viewerVirtuosoRef?: React.RefObject<VirtuosoHandle>;
   resultVirtuosoRef?: React.RefObject<VirtuosoHandle>;
   getResultItemIndex?: (pageNumber: number) => number;
+  // 传入后在工具栏右侧展示「添加图块」按钮，点击在预览屏幕中心创建可编辑图块
+  onAddTile?: () => void;
 }
 type ImageStatus = 'normal' | 'error' | 'loading' | 'wait';
 
@@ -76,6 +79,7 @@ const Image: React.FC<ImageProps> = ({
   docConvertToPDF = true,
   reserveExif,
   resultVirtuosoRef,
+  onAddTile,
 }) => {
   const { info: robotInfo } = useSelector(({ Robot, Common }: ConnectState) => ({
     info: Robot.info,
@@ -347,8 +351,20 @@ const Image: React.FC<ImageProps> = ({
       <div
         className={classNames(`${prefixCls}-operations-box`, {
           [styles['custom-viewer-footer']]: customPreview,
+          // 有「添加图块」按钮时盒子需要 position: relative，供按钮绝对定位到左侧
+          [styles['operations-box-static']]: !!onAddTile,
         })}
       >
+        {status === 'normal' && onAddTile && (
+          <div
+            className={styles.addTileBtn}
+            onClick={onAddTile}
+            title="在当前预览屏幕中心添加一个可编辑的图块"
+          >
+            <PlusOutlined />
+            <span>添加图块</span>
+          </div>
+        )}
         <ul className={`${prefixCls}-operations`} onMouseEnter={() => setShowTransition(true)}>
           {isExcel && <div className={styles.fileName}>{currentFile?.name}</div>}
           {status === 'normal' &&

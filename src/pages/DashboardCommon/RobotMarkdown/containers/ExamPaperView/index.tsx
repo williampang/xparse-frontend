@@ -670,15 +670,29 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
     [examData, setResultJson],
   );
 
-  // 图片预览：为题目添加选项（options 与 contentGroups.options 同步追加，保持索引对应）
+  // 图片预览：为题目添加选项（options 与 contentGroups.options 同步插入，保持索引对应）
+  // 传入 afterOptionIdx（当前选中的选项）时，新选项插入到该选项之后，标签为选中选项的下一个字母（选中 A 则新选项为 B），
+  // 其余选项标签保持不变；未选中选项时保持原逻辑追加到末尾
   const handleImageAddOption = useCallback(
-    (sectionIdx: number, questionIdx: number) => {
+    (sectionIdx: number, questionIdx: number, afterOptionIdx?: number | null) => {
       updateImageQuestion(sectionIdx, questionIdx, (question) => {
-        const nextLabel = String.fromCharCode(65 + question.options.length); // A, B, C...
-        question.options.push({ label: nextLabel, text: '' });
+        const insertAt =
+          typeof afterOptionIdx === 'number' &&
+          afterOptionIdx >= 0 &&
+          afterOptionIdx < question.options.length
+            ? afterOptionIdx + 1
+            : question.options.length;
+        // 新选项标签：选中选项标签的下一个字母；选中选项为自定义标签时按插入位置顺序生成
+        const selectedLabel =
+          typeof afterOptionIdx === 'number' ? question.options[afterOptionIdx]?.label : undefined;
+        const nextLabel =
+          selectedLabel && /^[A-Y]$/.test(selectedLabel)
+            ? String.fromCharCode(selectedLabel.charCodeAt(0) + 1)
+            : String.fromCharCode(65 + insertAt);
+        question.options.splice(insertAt, 0, { label: nextLabel, text: '' });
         if (question.contentGroups) {
           question.contentGroups.options = question.contentGroups.options || [];
-          question.contentGroups.options.push({ label: nextLabel, text: '', contentIds: [] });
+          question.contentGroups.options.splice(insertAt, 0, { label: nextLabel, text: '', contentIds: [] });
         }
       });
     },
@@ -694,6 +708,19 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
         }
         if (question.contentGroups?.options?.[optionIdx]) {
           question.contentGroups.options[optionIdx].label = newLabel;
+        }
+      });
+    },
+    [updateImageQuestion],
+  );
+
+  // 图片预览：删除选项（options 与 contentGroups.options 同步删除同一位置，其余选项保持不变）
+  const handleImageRemoveOption = useCallback(
+    (sectionIdx: number, questionIdx: number, optionIdx: number) => {
+      updateImageQuestion(sectionIdx, questionIdx, (question) => {
+        question.options.splice(optionIdx, 1);
+        if (question.contentGroups?.options) {
+          question.contentGroups.options.splice(optionIdx, 1);
         }
       });
     },
@@ -1046,6 +1073,7 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
           data={displayData}
           isPdf={isPdf}
           onAddOption={handleImageAddOption}
+          onRemoveOption={handleImageRemoveOption}
           onRenameOption={handleImageRenameOption}
           onRemovePiece={handleImageRemovePiece}
           onAddImageToSlot={handleImageAddToSlot}

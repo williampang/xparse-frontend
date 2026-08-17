@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { IFile } from '@/pages/DashboardCommon/components/RobotMainView/Index';
 import ImageView from '@/pages/DashboardCommon/components/RobotMainView/Index';
 import useAfterLoad from '@/pages/DashboardCommon/RobotMarkdown/hooks/useAfterLoad';
+import useAddTile from '@/pages/DashboardCommon/RobotMarkdown/hooks/useAddTile';
 import SVGRect, { getImgWidth } from '@/components/SvgRect/Index';
+import { ResultType } from '../RightView/RightView';
 import { storeContainer } from '../../store';
 
 export type MainViewProps = {
@@ -24,7 +26,11 @@ export default ({ showText = true, autoLink, ...props }: MainViewProps) => {
     rectList: singleRects,
     setResultJson,
     resultVirtuosoRef,
+    resultType,
   } = storeContainer.useContainer();
+
+  // 试卷 tab 下在左侧预览工具栏展示「添加图块」按钮
+  const handleAddTile = useAddTile();
 
   const { onLoad, rects } = useAfterLoad(currentFile?.rects);
 
@@ -59,6 +65,7 @@ export default ({ showText = true, autoLink, ...props }: MainViewProps) => {
     <ImageView
       {...props}
       resultVirtuosoRef={resultVirtuosoRef}
+      onAddTile={resultType === ResultType.exam_paper ? handleAddTile : undefined}
       callBack={(props: any) => {
         imgRef.current = props.imgRef?.current;
         markRefresh();
