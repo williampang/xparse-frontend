@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Spin, Tag, Empty, message } from 'antd';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Spin, Tag, Empty, Button, Input, message } from 'antd';
 import { downloadOcrImg } from '@/services/robot';
 import { addDataToURL } from '@/utils';
 import type { IExamPaperData, IExamPaperQuestion } from '../../data.d';
@@ -11,6 +11,8 @@ interface IProps {
   result: any;
   data: IExamPaperData;
   isPdf?: boolean;
+  onAddOption?: (sectionIdx: number, questionIdx: number) => void;
+  onRenameOption?: (sectionIdx: number, questionIdx: number, optionIdx: number, newLabel: string) => void;
 }
 
 /** 题目在原图中的区域（页面坐标系） */
@@ -470,13 +472,13 @@ const getQuestionImageSections = (result: any, question: IExamPaperQuestion): IQ
   }
 
   const stem = blocksToRegions(result, getBlocksByIds(result, groups.stem));
-  const options = (groups.options || [])
-    .filter((opt) => opt.contentIds?.length)
-    .map((opt) => ({
-      label: opt.label,
-      regions: blocksToRegions(result, getBlocksByIds(result, opt.contentIds)),
-    }))
-    .filter((item) => item.regions.length > 0);
+  // 不过滤无区域的选项，保持与 question.options 索引一一对应（新增/无定位选项渲染占位行）
+  const options = (groups.options || []).map((opt) => ({
+    label: opt.label,
+    regions: opt.contentIds?.length
+      ? blocksToRegions(result, getBlocksByIds(result, opt.contentIds))
+      : [],
+  }));
   const answer = blocksToRegions(result, getBlocksByIds(result, groups.answer));
   const analysis = blocksToRegions(result, getBlocksByIds(result, groups.analysis));
   const knowledge = blocksToRegions(result, getBlocksByIds(result, groups.knowledge || []));
@@ -809,24 +811,109 @@ const CropRegionImage: React.FC<{ result: any; region: IQuestionRegion; isPdf: b
   );
 };
 
+/** 可编辑的选项标签：点击进入输入态，Enter/blur 提交，Esc 取消 */
+const EditableOptionLabel: React.FC<{
+  label: string;
+  onRename: (newLabel: string) => void;
+}> = ({ label, onRename }) => {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(label);
+  // Esc 取消后 Input 卸载可能触发 blur，标记跳过本次提交
+  const cancelledRef = useRef(false);
+  // Enter 提交后 Input 卸载可能再触发 blur，避免重复提交
+  const committedRef = useRef(false);
+
+  const commit = () => {
+    if (cancelledRef.current) {
+      cancelledRef.current = false;
+      return;
+    }
+    if (committedRef.current) return;
+    committedRef.current = true;
+    const trimmed = value.trim();
+    setEditing(false);
+    if (trimmed && trimmed !== label) {
+      onRename(trimmed);
+    }
+  };
+
+  if (editing) {
+    return (
+      <Input
+        className={styles.imageOptionLabelInput}
+        size="small"
+        autoFocus
+        value={value}
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => setValue(e.target.value)}
+        onPressEnter={commit}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            cancelledRef.current = true;
+            setValue(label);
+            setEditing(false);
+          }
+        }}
+      />
+    );
+  }
+  return (
+    <span
+      className={styles.imageOptionLabelBtn}
+      title="点击编辑选项名"
+      onClick={(e) => {
+        e.stopPropagation();
+        cancelledRef.current = false;
+        committedRef.current = false;
+        setValue(label);
+        setEditing(true);
+      }}
+    >
+      {label}.
+    </span>
+  );
+};
+
 /** 图片模式下的单个题目 */
 const ImageQuestionItem: React.FC<{
   result: any;
   question: IExamPaperQuestion;
   isPdf: boolean;
   showIndex?: boolean;
+  sectionIdx?: number;
+  questionIdx?: number;
+  selected?: boolean;
+  onSelect?: (key: string) => void;
+  onAddOption?: (sectionIdx: number, questionIdx: number) => void;
+  onRenameOption?: (sectionIdx: number, questionIdx: number, optionIdx: number, newLabel: string) => void;
 }> = ({
   result,
   question,
   isPdf,
   showIndex = true,
+  sectionIdx,
+  questionIdx,
+  selected = false,
+  onSelect,
+  onAddOption,
+  onRenameOption,
 }) => {
   const { deleteBlock, undoDeleteBlock } = storeContainer.useContainer();
   const sections = useMemo(() => getQuestionImageSections(result, question), [result, question]);
   const questionContentId = question.contentIds.length > 0 ? question.contentIds[0] : undefined;
+  // 无 contentGroups 的旧数据：用 question.options 兜底渲染占位行
+  const fallbackOptions = useMemo(
+    () =>
+      question.contentGroups
+        ? null
+        : question.options.map((opt) => ({ label: opt.label, regions: [] as IQuestionRegion[] })),
+    [question],
+  );
+  const optionList = fallbackOptions || sections.options;
   const hasAnyRegion =
     sections.stem.length > 0 ||
-    sections.options.length > 0 ||
+    sections.options.some((opt) => opt.regions.length > 0) ||
     sections.answer.length > 0 ||
     sections.analysis.length > 0 ||
     sections.knowledge.length > 0 ||
@@ -869,6 +956,10 @@ const ImageQuestionItem: React.FC<{
         clearAllActive(document.documentElement, styles.active);
         e.currentTarget.classList.add(styles.active);
         highlightLeftViewRects(region.contentIds, region.pageNumber);
+        // 图块点击不冒泡，需同步选中所属题目以展示右上角操作按钮
+        if (onSelect && sectionIdx !== undefined && questionIdx !== undefined) {
+          onSelect(`${sectionIdx}-${questionIdx}`);
+        }
       }}
       title={`第 ${region.pageNumber} 页 · 点击在左侧视图中定位`}
     >
@@ -891,11 +982,28 @@ const ImageQuestionItem: React.FC<{
 
   return (
     <div
-      className={styles.imageQuestionItem}
+      className={`${styles.imageQuestionItem} ${selected ? styles.imageQuestionSelected : ''}`}
       data-question-content-ids={question.contentIds.join(',')}
+      data-question-key={
+        sectionIdx !== undefined && questionIdx !== undefined ? `${sectionIdx}-${questionIdx}` : undefined
+      }
       data-content-id={questionContentId}
     >
-      {!hasAnyRegion ? (
+      {/* 选中题目后在右上角展示添加选项按钮 */}
+      {selected && sectionIdx !== undefined && questionIdx !== undefined && (
+        <Button
+          size="small"
+          type="dashed"
+          className={styles.imageAddOptionBtn}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddOption?.(sectionIdx, questionIdx);
+          }}
+        >
+          + 添加选项
+        </Button>
+      )}
+      {!hasAnyRegion && !optionList.length ? (
         <div className={styles.cropFailed}>该题目暂无图片定位信息</div>
       ) : (
         <div className={styles.imageQuestionBody}>
@@ -911,15 +1019,26 @@ const ImageQuestionItem: React.FC<{
             )}
           </div>
 
-          {/* 选项 */}
-          {sections.options.length > 0 && (
+          {/* 选项：有原图区域的渲染裁剪图，无区域的（新增/无定位）渲染占位行 */}
+          {optionList.length > 0 && (
             <div className={styles.imageQuestionOptions}>
-              {sections.options.map((opt, optIdx) => (
-                <div key={`opt-${opt.label}-${optIdx}`} className={styles.imageOptionItem}>
-                  <span className={styles.optionLabel}>{opt.label}.</span>
+              {optionList.map((opt, optIdx) => (
+                <div key={`opt-${optIdx}-${opt.label}`} className={styles.imageOptionItem}>
+                  <EditableOptionLabel
+                    label={opt.label}
+                    onRename={(newLabel) => {
+                      if (sectionIdx !== undefined && questionIdx !== undefined) {
+                        onRenameOption?.(sectionIdx, questionIdx, optIdx, newLabel);
+                      }
+                    }}
+                  />
                   <div className={styles.imageOptionContent}>
-                    {opt.regions.map((region, rIdx) =>
-                      renderCropPiece(region, `opt-${opt.label}-${region.pageId}-${rIdx}`),
+                    {opt.regions.length > 0 ? (
+                      opt.regions.map((region, rIdx) =>
+                        renderCropPiece(region, `opt-${opt.label}-${region.pageId}-${rIdx}`),
+                      )
+                    ) : (
+                      <div className={styles.imageOptionPlaceholder}>暂无原图区域</div>
                     )}
                   </div>
                 </div>
@@ -1012,8 +1131,25 @@ const ImageQuestionItem: React.FC<{
 };
 
 /** 试卷图片预览视图：按题目展示其在原始文档中的图片与位置 */
-const ExamPaperImageView: React.FC<IProps> = ({ result, data, isPdf = false }) => {
+const ExamPaperImageView: React.FC<IProps> = ({
+  result,
+  data,
+  isPdf = false,
+  onAddOption,
+  onRenameOption,
+}) => {
   const { undoDeleteBlock, canUndoDelete } = storeContainer.useContainer();
+
+  // 当前选中的题目 key（`${sectionIdx}-${questionIdx}`），选中后展示右上角操作按钮
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
+  // 点击事件委托：命中题目则选中，点击空白处则清除选中态；
+  // 与外层 ExamPaperView 的左侧联动高亮逻辑各自独立，不改变其行为
+  const handleContainerClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const questionDom = target.closest('[data-question-key]');
+    setSelectedKey(questionDom?.getAttribute('data-question-key') || null);
+  };
 
   // 支持 Ctrl+Z / Cmd+Z 快捷撤销删除
   useEffect(() => {
@@ -1038,9 +1174,9 @@ const ExamPaperImageView: React.FC<IProps> = ({ result, data, isPdf = false }) =
   }
 
   return (
-    <div className={styles.examPaperImageContainer}>
+    <div className={styles.examPaperImageContainer} onClick={handleContainerClick}>
       <div className={styles.imageModeTip}>
-        图片预览按题目展示其在原始文档中的截图与坐标位置，点击可在左侧视图中定位；在左侧选中单个识别框后可拖拽移动或调整大小，右侧图片将同步更新。
+        图片预览按题目展示其在原始文档中的截图与坐标位置，点击可在左侧视图中定位；在左侧选中单个识别框后可拖拽移动或调整大小，右侧图片将同步更新。选中题目后可添加选项，点击选项标签可修改选项名。
       </div>
       <div className={styles.paperSections}>
         {data.sections.map((section, idx) => (
@@ -1050,9 +1186,23 @@ const ExamPaperImageView: React.FC<IProps> = ({ result, data, isPdf = false }) =
               <Tag className={styles.sectionCount}>共 {section.questions.length} 题</Tag>
             </div>
             <div className={styles.sectionQuestions}>
-              {section.questions.map((q, qIdx) => (
-                <ImageQuestionItem key={qIdx} result={result} question={q} isPdf={isPdf} />
-              ))}
+              {section.questions.map((q, qIdx) => {
+                const qKey = `${idx}-${qIdx}`;
+                return (
+                  <ImageQuestionItem
+                    key={qIdx}
+                    result={result}
+                    question={q}
+                    isPdf={isPdf}
+                    sectionIdx={idx}
+                    questionIdx={qIdx}
+                    selected={selectedKey === qKey}
+                    onSelect={setSelectedKey}
+                    onAddOption={onAddOption}
+                    onRenameOption={onRenameOption}
+                  />
+                );
+              })}
             </div>
           </div>
         ))}

@@ -606,6 +606,7 @@
 }
 
 .imageQuestionItem {
+  position: relative;
   padding: 8px;
   border-bottom: 1px solid #f2f3f5;
   border-radius: 4px;
@@ -616,6 +617,34 @@
 
   &:hover {
     background: #fafbfc;
+  }
+}
+
+// 选中态：背景加深，与 hover 区分
+.imageQuestionSelected {
+  background: #f0f5ff;
+
+  &:hover {
+    background: #f0f5ff;
+  }
+}
+
+// 选中题目后右上角的添加选项按钮
+.imageAddOptionBtn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 5;
+  font-size: 12px;
+  color: #1a66ff;
+  border-color: #adc6ff;
+  background: #fff;
+
+  &:hover,
+  &:focus {
+    color: #1a66ff;
+    border-color: #1a66ff;
+    background: #f0f5ff;
   }
 }
 
@@ -717,6 +746,42 @@
   display: flex;
   align-items: flex-start;
   gap: 6px;
+}
+
+// 可编辑选项标签：hover 提示可点击编辑
+.imageOptionLabelBtn {
+  flex-shrink: 0;
+  min-width: 20px;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 2px;
+  font-weight: 500;
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    background: #e6f0ff;
+    color: #1a66ff;
+  }
+}
+
+.imageOptionLabelInput {
+  width: 48px;
+  flex-shrink: 0;
+  text-align: center;
+  font-weight: 500;
+}
+
+// 无原图区域的选项占位行（新增/无定位选项）
+.imageOptionPlaceholder {
+  font-size: 12px;
+  color: #b0b6bf;
+  border: 1px dashed #d9dce1;
+  border-radius: 4px;
+  padding: 4px 10px;
+  background: #fafbfc;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
 }
 
 .imageOptionContent,

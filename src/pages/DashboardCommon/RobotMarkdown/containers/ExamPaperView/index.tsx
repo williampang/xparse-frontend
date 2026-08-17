@@ -43,6 +43,46 @@ const RichContent: React.FC<{ content: string }> = ({ content }) => {
   return <MarkdownRender content={content} />;
 };
 
+/**
+ * 将试卷数据扁平化为可写回 resultJson.questions 的题目列表。
+ * 清空 element_list，确保 parseQuestion 从直接字段读取内容；
+ * 同时写入 snake_case 字段，保证子题目等可被回读
+ */
+const buildEditedQuestions = (data: IExamPaperData): any[] => {
+  const allEditedQuestions: any[] = [];
+  for (const section of data.sections) {
+    for (const question of section.questions) {
+      const editedQ: any = {
+        index: question.index,
+        type: question.type || '',
+        typeDesc: question.typeDesc || '',
+        stem: question.stem || '',
+        answer: question.answer || '',
+        analysis: question.analysis || '',
+        knowledge: question.knowledge || '',
+        difficulty: question.difficulty || '',
+        score: question.score || '',
+        options: question.options.map((opt) => ({ label: opt.label, text: opt.text })),
+        element_list: [], // 清空 element_list，确保 parseQuestion 从直接字段读取编辑后的内容
+        contentIds: question.contentIds || [],
+        contentGroups: question.contentGroups,
+      };
+      editedQ.sub_questions = (question.subQuestions || []).map((sub) => ({
+        index: sub.index,
+        stem: sub.stem || '',
+        answer: sub.answer || '',
+        analysis: sub.analysis || '',
+        options: (sub.options || []).map((opt) => ({ label: opt.label, text: opt.text })),
+        element_list: [],
+      }));
+      editedQ.image_list = question.images || [];
+      editedQ.table_list = question.tables || [];
+      allEditedQuestions.push(editedQ);
+    }
+  }
+  return allEditedQuestions;
+};
+
 /** 可编辑的题目项（只有当前选中的题目才渲染 CKEditor） */
 const EditableQuestionItem: React.FC<{
   question: IExamPaperQuestion;
@@ -534,49 +574,65 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
       if (!prev) return prev;
       const newResult = JSON.parse(JSON.stringify(prev));
 
-      // 收集所有编辑后的题目（扁平化）
-      const allEditedQuestions: any[] = [];
-      for (const section of editedData.sections) {
-        for (const question of section.questions) {
-          const editedQ: any = {
-            index: question.index,
-            type: question.type || '',
-            typeDesc: question.typeDesc || '',
-            stem: question.stem || '',
-            answer: question.answer || '',
-            analysis: question.analysis || '',
-            knowledge: question.knowledge || '',
-            difficulty: question.difficulty || '',
-            score: question.score || '',
-            options: question.options.map((opt) => ({ label: opt.label, text: opt.text })),
-            element_list: [], // 清空 element_list，确保 parseQuestion 从直接字段读取编辑后的内容
-            contentIds: question.contentIds || [],
-            contentGroups: question.contentGroups,
-          };
-          // 同时写入 snake_case 字段，确保 parseQuestion 能读取
-          editedQ.sub_questions = (question.subQuestions || []).map((sub) => ({
-            index: sub.index,
-            stem: sub.stem || '',
-            answer: sub.answer || '',
-            analysis: sub.analysis || '',
-            options: (sub.options || []).map((opt) => ({ label: opt.label, text: opt.text })),
-            element_list: [],
-          }));
-          editedQ.image_list = question.images || [];
-          editedQ.table_list = question.tables || [];
-          allEditedQuestions.push(editedQ);
-        }
-      }
-
       // 始终将编辑后的 questions 写入 resultJson
       // 这样 formatExamPaper 下次渲染时会优先从 questions 读取，确保编辑结果生效；
       // _edited 标记区分用户编辑保存与后端原始 questions，避免 detail 优先策略覆盖编辑结果
-      newResult.questions = allEditedQuestions;
+      newResult.questions = buildEditedQuestions(editedData);
       newResult._edited = true;
 
       return newResult;
     });
   }, [editedData, result, setResultJson]);
+
+  // 图片预览（查看模式）下直接修改某道题目并即时写回 resultJson，
+  // 与删除图块（deleteBlock）的即时生效行为保持一致
+  const updateImageQuestion = useCallback(
+    (sectionIdx: number, questionIdx: number, mutator: (question: IExamPaperQuestion) => void) => {
+      if (!examData) return;
+      const newData: IExamPaperData = JSON.parse(JSON.stringify(examData));
+      const question = newData.sections[sectionIdx]?.questions[questionIdx];
+      if (!question) return;
+      mutator(question);
+      setResultJson((prev: any) => {
+        if (!prev) return prev;
+        const newResult = JSON.parse(JSON.stringify(prev));
+        newResult.questions = buildEditedQuestions(newData);
+        newResult._edited = true;
+        return newResult;
+      });
+    },
+    [examData, setResultJson],
+  );
+
+  // 图片预览：为题目添加选项（options 与 contentGroups.options 同步追加，保持索引对应）
+  const handleImageAddOption = useCallback(
+    (sectionIdx: number, questionIdx: number) => {
+      updateImageQuestion(sectionIdx, questionIdx, (question) => {
+        const nextLabel = String.fromCharCode(65 + question.options.length); // A, B, C...
+        question.options.push({ label: nextLabel, text: '' });
+        if (question.contentGroups) {
+          question.contentGroups.options = question.contentGroups.options || [];
+          question.contentGroups.options.push({ label: nextLabel, text: '', contentIds: [] });
+        }
+      });
+    },
+    [updateImageQuestion],
+  );
+
+  // 图片预览：重命名选项标签（只改当前选项，不级联）
+  const handleImageRenameOption = useCallback(
+    (sectionIdx: number, questionIdx: number, optionIdx: number, newLabel: string) => {
+      updateImageQuestion(sectionIdx, questionIdx, (question) => {
+        if (question.options[optionIdx]) {
+          question.options[optionIdx].label = newLabel;
+        }
+        if (question.contentGroups?.options?.[optionIdx]) {
+          question.contentGroups.options[optionIdx].label = newLabel;
+        }
+      });
+    },
+    [updateImageQuestion],
+  );
 
   // 单道题目点击“保存”：退出编辑态并保存
   const handleSaveQuestion = useCallback(
@@ -853,7 +909,13 @@ const ExamPaperView: React.FC<IProps> = ({ result, isPdf = false }) => {
       </div>
 
       {isImagePreview ? (
-        <ExamPaperImageView result={result} data={displayData} isPdf={isPdf} />
+        <ExamPaperImageView
+          result={result}
+          data={displayData}
+          isPdf={isPdf}
+          onAddOption={handleImageAddOption}
+          onRenameOption={handleImageRenameOption}
+        />
       ) : (
         /* 大题列表 */
         <div className={styles.paperSections}>
