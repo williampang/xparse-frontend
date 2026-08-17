@@ -125,7 +125,8 @@ const RightContainer: FC<IProps> = ({
   const { showImageDot, setShowImageDot, imageTipVisible, setImageTipVisible, hasSubImages } =
     useImageTips(currentFile);
 
-  const showAutoSaveSwitch = (resultType === ResultType.md || resultType === ResultType.exam_paper) && showAutoSave;
+  // 试卷采用单题编辑/保存模式，不展示自动保存开关
+  const showAutoSaveSwitch = resultType === ResultType.md && showAutoSave;
 
   const options = useMemo(() => {
     const list = [

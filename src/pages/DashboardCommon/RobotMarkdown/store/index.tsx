@@ -153,9 +153,10 @@ const useStore = () => {
   }, [currentFile?.id]);
 
   const shouldSaveMarkdown = !currentFile?.isExample;
+  // 试卷采用单题编辑/保存模式，不展示自动保存开关
   const showAutoSave = useMemo(() => {
-    return !!shouldSaveMarkdown && (markdownMode === 'edit' || examPaperMode === 'edit');
-  }, [shouldSaveMarkdown, markdownMode, examPaperMode, currentFile]);
+    return !!shouldSaveMarkdown && markdownMode === 'edit';
+  }, [shouldSaveMarkdown, markdownMode, currentFile]);
 
   const [autoSaveMarkdown, _setAutoSaveMarkdown] = useState<boolean>(
     (localStorage.getItem('autoSaveMarkdown') ?? 'true') === 'true',
